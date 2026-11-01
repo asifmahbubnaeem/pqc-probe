@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use thiserror::Error;
 use tokio::process::Command;
+use std::collections::HashSet;
 
 /// A TLS or SSH target.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -462,5 +463,147 @@ mod tests {
     #[test]
     fn normalize_group_rejects_null_sentinel(){
         assert_eq!(normalize_group("<NULL>"), None);
+    }
+}// Append to pqc-probe-core/src/lib.rs. These items extend the Week 1 code; no deletions.
+// Add `openssl_oqs_path: Option<String>` to ProbeOptions by patching the existing struct;
+// everything else is additive.
+
+use std::collections::HashSet;
+
+/// Report that combines two probes of the same target: one via vanilla OpenSSL,
+/// one via OpenSSL with oqs-provider loaded. The diff between the two is the
+/// actionable output — it says what oqs-provider actually adds to the TLS layer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DualProbeReport {
+    pub target: Target,
+    pub vanilla: Option<ProbeReport>,
+    pub experimental: Option<ProbeReport>,
+    pub diff: KemDiff,
+}
+
+/// Diff summary across the two probes' negotiated KEM sets.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct KemDiff {
+    /// KEMs that negotiated in vanilla but not in experimental.
+    pub only_vanilla: Vec<String>,
+    /// KEMs that negotiated in experimental but not in vanilla — the interesting case.
+    pub only_experimental: Vec<String>,
+    /// KEMs that negotiated in both.
+    pub in_both: Vec<String>,
+}
+
+/// Probe the same target with two openssl stacks in parallel, then diff.
+///
+/// `vanilla_opts.openssl_path` should point at a plain OpenSSL build.
+/// `experimental_opts.openssl_path` should point at an OpenSSL build with
+/// oqs-provider activated via `openssl.cnf` (see repo docs/oqs-setup.md).
+pub async fn probe_dual(
+    target: &Target,
+    vanilla_opts: &ProbeOptions,
+    experimental_opts: &ProbeOptions,
+) -> Result<DualProbeReport, ProbeError> {
+    let (vanilla_result, experimental_result) = tokio::join!(
+        probe(target, vanilla_opts),
+        probe(target, experimental_opts),
+    );
+
+    let vanilla = vanilla_result.ok();
+    let experimental = experimental_result.ok();
+
+    let diff = compute_diff(vanilla.as_ref(), experimental.as_ref());
+
+    Ok(DualProbeReport {
+        target: target.clone(),
+        vanilla,
+        experimental,
+        diff,
+    })
+}
+
+fn compute_diff(vanilla: Option<&ProbeReport>, experimental: Option<&ProbeReport>) -> KemDiff {
+    let v_names = extract_negotiated(vanilla);
+    let e_names = extract_negotiated(experimental);
+
+    let only_vanilla: Vec<String> = v_names.difference(&e_names).cloned().collect();
+    let only_experimental: Vec<String> = e_names.difference(&v_names).cloned().collect();
+    let in_both: Vec<String> = v_names.intersection(&e_names).cloned().collect();
+
+    let mut only_vanilla = only_vanilla;
+    let mut only_experimental = only_experimental;
+    let mut in_both = in_both;
+    only_vanilla.sort();
+    only_experimental.sort();
+    in_both.sort();
+
+    KemDiff {
+        only_vanilla,
+        only_experimental,
+        in_both,
+    }
+}
+
+fn extract_negotiated(report: Option<&ProbeReport>) -> HashSet<String> {
+    report
+        .and_then(|r| r.tls.as_ref())
+        .map(|t| {
+            t.kems_tried
+                .iter()
+                .filter(|k| k.handshake_succeeded)
+                .filter_map(|k| k.negotiated.clone())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod dual_tests {
+    use super::*;
+
+    fn fake_report(negotiated: &[&str]) -> ProbeReport {
+        ProbeReport {
+            target: Target::new("example.com", 443),
+            tls: Some(TlsReport {
+                protocol_version: Some("TLSv1.3".to_string()),
+                cipher: Some("TLS_AES_256_GCM_SHA384".to_string()),
+                kems_tried: negotiated
+                    .iter()
+                    .map(|&name| KemResult {
+                        offered: name.to_string(),
+                        negotiated: Some(name.to_string()),
+                        handshake_succeeded: true,
+                    })
+                    .collect(),
+                cert_sig_alg: None,
+                peer_sig_alg: None,
+            }),
+        }
+    }
+
+    #[test]
+    fn diff_empty_when_identical() {
+        let v = fake_report(&["X25519", "P-256"]);
+        let e = fake_report(&["X25519", "P-256"]);
+        let d = compute_diff(Some(&v), Some(&e));
+        assert_eq!(d.in_both, vec!["P-256", "X25519"]);
+        assert!(d.only_vanilla.is_empty());
+        assert!(d.only_experimental.is_empty());
+    }
+
+    #[test]
+    fn diff_captures_experimental_additions() {
+        let v = fake_report(&["X25519", "P-256"]);
+        let e = fake_report(&["X25519", "P-256", "x25519_kyber768"]);
+        let d = compute_diff(Some(&v), Some(&e));
+        assert_eq!(d.only_experimental, vec!["x25519_kyber768"]);
+        assert!(d.only_vanilla.is_empty());
+        assert_eq!(d.in_both, vec!["P-256", "X25519"]);
+    }
+
+    #[test]
+    fn diff_handles_missing_experimental() {
+        let v = fake_report(&["X25519"]);
+        let d = compute_diff(Some(&v), None);
+        assert_eq!(d.in_both, Vec::<String>::new());
+        assert_eq!(d.only_vanilla, vec!["X25519"]);
     }
 }
