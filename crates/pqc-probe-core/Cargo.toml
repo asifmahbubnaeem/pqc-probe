@@ -1,0 +1,15 @@
+[package]
+name = "pqc-probe-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Core probe logic: detects PQ algorithms on TLS and SSH endpoints"
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
