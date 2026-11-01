@@ -468,7 +468,6 @@ mod tests {
 // Add `openssl_oqs_path: Option<String>` to ProbeOptions by patching the existing struct;
 // everything else is additive.
 
-use std::collections::HashSet;
 
 /// Report that combines two probes of the same target: one via vanilla OpenSSL,
 /// one via OpenSSL with oqs-provider loaded. The diff between the two is the
@@ -607,3 +606,13 @@ mod dual_tests {
         assert_eq!(d.only_vanilla, vec!["X25519"]);
     }
 }
+// Add to pqc-probe-core/src/lib.rs. Two changes:
+//   1. Add `pub mod ssh;` near the top (after other module declarations if any).
+//   2. Re-export the SSH types at the crate root for convenient access.
+
+pub mod ssh;
+
+// Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
+pub use ssh::{
+    probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
+};

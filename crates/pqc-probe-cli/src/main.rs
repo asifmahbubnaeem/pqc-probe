@@ -1,9 +1,12 @@
-// Replace crates/pqc-probe-cli/src/main.rs with this. Adds experimental and both
-// modes, plus a side-by-side diff formatter.
+// Replace crates/pqc-probe-cli/src/main.rs with this.
+// Adds --protocol flag (tls | ssh | both), SSH probing, SSH dual-mode diff output.
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use pqc_probe_core::{probe, probe_dual, DualProbeReport, ProbeMode, ProbeOptions, ProbeReport, Target};
+use pqc_probe_core::{
+    probe, probe_dual, probe_ssh, probe_ssh_dual, DualProbeReport, DualSshReport, ProbeMode,
+    ProbeOptions, ProbeReport, SshProbeOptions, SshReport, Target,
+};
 use std::time::Duration;
 use tracing_subscriber::EnvFilter;
 
@@ -20,9 +23,12 @@ enum Command {
     Probe {
         /// Target in host:port form, e.g. example.com:443
         target: String,
-        /// Which stack to probe with.
+        /// Which stack(s) to probe with.
         #[arg(long, value_enum, default_value_t = Mode::Vanilla)]
         mode: Mode,
+        /// Which protocol(s) to probe.
+        #[arg(long, value_enum, default_value_t = Protocol::Tls)]
+        protocol: Protocol,
         /// Output format.
         #[arg(long, value_enum, default_value_t = Output::Human)]
         output: Output,
@@ -32,13 +38,17 @@ enum Command {
     },
 }
 
-#[derive(Clone, Copy, ValueEnum)]
+#[derive(Clone, Copy, ValueEnum, PartialEq)]
 enum Mode {
-    /// Vanilla OpenSSL only — what a stock TLS client sees today.
     Vanilla,
-    /// OpenSSL + oqs-provider only — extended codepoint set.
     Experimental,
-    /// Both, with a diff section — the Phase 4 lens applied programmatically.
+    Both,
+}
+
+#[derive(Clone, Copy, ValueEnum, PartialEq)]
+enum Protocol {
+    Tls,
+    Ssh,
     Both,
 }
 
@@ -60,79 +70,177 @@ async fn main() -> Result<()> {
         Command::Probe {
             target,
             mode,
+            protocol,
             output,
             timeout,
-        } => run_probe(target, mode, output, timeout).await,
+        } => run_probe(target, mode, protocol, output, timeout).await,
     }
 }
 
-async fn run_probe(target: String, mode: Mode, output: Output, timeout: u64) -> Result<()> {
-    let target = Target::parse(&target).context("parsing target")?;
+async fn run_probe(
+    target_str: String,
+    mode: Mode,
+    protocol: Protocol,
+    output: Output,
+    timeout: u64,
+) -> Result<()> {
+    let target = Target::parse(&target_str).context("parsing target")?;
+
+    let want_tls = matches!(protocol, Protocol::Tls | Protocol::Both);
+    let want_ssh = matches!(protocol, Protocol::Ssh | Protocol::Both);
+
+    let tls_default_port = 443;
+    let ssh_default_port = 22;
+
+    let tls_target = if target.port == ssh_default_port && want_tls && !want_ssh {
+        anyhow::bail!("asked for TLS but target port is {}", target.port);
+    } else {
+        target.clone()
+    };
+    let ssh_target = Target {
+        host: target.host.clone(),
+        // When probing both protocols, use the SSH default if the given port looks TLS-y
+        port: if protocol == Protocol::Both && target.port == tls_default_port {
+            ssh_default_port
+        } else {
+            target.port
+        },
+    };
 
     let vanilla_openssl = std::env::var("PQC_PROBE_OPENSSL").unwrap_or_else(|_| "openssl".into());
     let oqs_openssl = std::env::var("PQC_PROBE_OPENSSL_OQS").ok();
+    let vanilla_ssh = std::env::var("PQC_PROBE_SSH").unwrap_or_else(|_| "ssh".into());
+    let oqs_ssh = std::env::var("PQC_PROBE_SSH_OQS").ok();
 
-    match mode {
-        Mode::Vanilla => {
-            let opts = ProbeOptions {
-                mode: ProbeMode::Vanilla,
-                timeout: Duration::from_secs(timeout),
-                openssl_path: vanilla_openssl,
-            };
-            let report = probe(&target, &opts).await.context("vanilla probe")?;
-            match output {
-                Output::Json => println!("{}", serde_json::to_string_pretty(&report)?),
-                Output::Human => print_single(&report, "Vanilla"),
+    let timeout_dur = Duration::from_secs(timeout);
+
+    // ========== Collect results ==========
+    let mut tls_single: Option<ProbeReport> = None;
+    let mut tls_dual: Option<DualProbeReport> = None;
+    let mut ssh_single: Option<SshReport> = None;
+    let mut ssh_dual: Option<DualSshReport> = None;
+
+    if want_tls {
+        match mode {
+            Mode::Vanilla => {
+                let opts = ProbeOptions {
+                    mode: ProbeMode::Vanilla,
+                    timeout: timeout_dur,
+                    openssl_path: vanilla_openssl.clone(),
+                };
+                tls_single = Some(probe(&tls_target, &opts).await.context("TLS probe")?);
             }
-        }
-        Mode::Experimental => {
-            let path = oqs_openssl.context(
-                "experimental mode requires PQC_PROBE_OPENSSL_OQS to point at an OpenSSL \
-                 binary with oqs-provider activated via openssl.cnf",
-            )?;
-            let opts = ProbeOptions {
-                mode: ProbeMode::Experimental,
-                timeout: Duration::from_secs(timeout),
-                openssl_path: path,
-            };
-            let report = probe(&target, &opts).await.context("experimental probe")?;
-            match output {
-                Output::Json => println!("{}", serde_json::to_string_pretty(&report)?),
-                Output::Human => print_single(&report, "Experimental"),
+            Mode::Experimental => {
+                let path = oqs_openssl.clone().context(
+                    "experimental TLS mode requires PQC_PROBE_OPENSSL_OQS",
+                )?;
+                let opts = ProbeOptions {
+                    mode: ProbeMode::Experimental,
+                    timeout: timeout_dur,
+                    openssl_path: path,
+                };
+                tls_single = Some(probe(&tls_target, &opts).await.context("TLS probe")?);
             }
-        }
-        Mode::Both => {
-            let oqs_path = oqs_openssl.context(
-                "both mode requires PQC_PROBE_OPENSSL_OQS to be set (in addition to \
-                 PQC_PROBE_OPENSSL)",
-            )?;
-            let vanilla_opts = ProbeOptions {
-                mode: ProbeMode::Vanilla,
-                timeout: Duration::from_secs(timeout),
-                openssl_path: vanilla_openssl,
-            };
-            let experimental_opts = ProbeOptions {
-                mode: ProbeMode::Experimental,
-                timeout: Duration::from_secs(timeout),
-                openssl_path: oqs_path,
-            };
-            let dual = probe_dual(&target, &vanilla_opts, &experimental_opts)
-                .await
-                .context("dual probe")?;
-            match output {
-                Output::Json => println!("{}", serde_json::to_string_pretty(&dual)?),
-                Output::Human => print_dual(&dual),
+            Mode::Both => {
+                let oqs_path = oqs_openssl
+                    .clone()
+                    .context("both-mode TLS requires PQC_PROBE_OPENSSL_OQS")?;
+                let v = ProbeOptions {
+                    mode: ProbeMode::Vanilla,
+                    timeout: timeout_dur,
+                    openssl_path: vanilla_openssl.clone(),
+                };
+                let e = ProbeOptions {
+                    mode: ProbeMode::Experimental,
+                    timeout: timeout_dur,
+                    openssl_path: oqs_path,
+                };
+                tls_dual = Some(probe_dual(&tls_target, &v, &e).await.context("TLS dual probe")?);
             }
         }
     }
+
+    if want_ssh {
+        match mode {
+            Mode::Vanilla => {
+                let opts = SshProbeOptions {
+                    timeout: timeout_dur,
+                    ssh_path: vanilla_ssh.clone(),
+                };
+                ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
+            }
+            Mode::Experimental => {
+                let path = oqs_ssh.clone().context(
+                    "experimental SSH mode requires PQC_PROBE_SSH_OQS",
+                )?;
+                let opts = SshProbeOptions {
+                    timeout: timeout_dur,
+                    ssh_path: path,
+                };
+                ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
+            }
+            Mode::Both => {
+                let oqs_path = oqs_ssh
+                    .clone()
+                    .context("both-mode SSH requires PQC_PROBE_SSH_OQS")?;
+                let v = SshProbeOptions {
+                    timeout: timeout_dur,
+                    ssh_path: vanilla_ssh.clone(),
+                };
+                let e = SshProbeOptions {
+                    timeout: timeout_dur,
+                    ssh_path: oqs_path,
+                };
+                ssh_dual = Some(
+                    probe_ssh_dual(&ssh_target, &v, &e)
+                        .await
+                        .context("SSH dual probe")?,
+                );
+            }
+        }
+    }
+
+    // ========== Render ==========
+    match output {
+        Output::Json => {
+            // Combine into one JSON object with optional fields.
+            let json = serde_json::json!({
+                "target": target_str,
+                "tls_single": tls_single,
+                "tls_dual": tls_dual,
+                "ssh_single": ssh_single,
+                "ssh_dual": ssh_dual,
+            });
+            println!("{}", serde_json::to_string_pretty(&json)?);
+        }
+        Output::Human => {
+            println!("Target: {}", target_str);
+            if let Some(r) = &tls_single {
+                println!();
+                print_tls_single(r, mode == Mode::Experimental);
+            }
+            if let Some(d) = &tls_dual {
+                println!();
+                print_tls_dual(d);
+            }
+            if let Some(r) = &ssh_single {
+                println!();
+                print_ssh_single(r, mode == Mode::Experimental);
+            }
+            if let Some(d) = &ssh_dual {
+                println!();
+                print_ssh_dual(d);
+            }
+        }
+    }
+
     Ok(())
 }
 
-fn print_single(report: &ProbeReport, label: &str) {
-    println!("Target: {}:{}  [{}]", report.target.host, report.target.port, label);
+fn print_tls_single(report: &ProbeReport, experimental: bool) {
+    let label = if experimental { "TLS (experimental)" } else { "TLS" };
+    println!("{}:", label);
     if let Some(tls) = &report.tls {
-        println!();
-        println!("TLS:");
         if let Some(v) = &tls.protocol_version {
             println!("  Protocol:          {}", v);
         }
@@ -156,24 +264,20 @@ fn print_single(report: &ProbeReport, label: &str) {
     }
 }
 
-fn print_dual(dual: &DualProbeReport) {
-    println!("Target: {}:{}", dual.target.host, dual.target.port);
-    println!();
-
-    let v_names = dual
+fn print_tls_dual(dual: &DualProbeReport) {
+    let v_set = dual
         .vanilla
         .as_ref()
         .and_then(|r| r.tls.as_ref())
-        .map(|t| negotiated_set(t))
+        .map(|t| negotiated_set_tls(t))
         .unwrap_or_default();
-    let e_names = dual
+    let e_set = dual
         .experimental
         .as_ref()
         .and_then(|r| r.tls.as_ref())
-        .map(|t| negotiated_set(t))
+        .map(|t| negotiated_set_tls(t))
         .unwrap_or_default();
 
-    // Union of offered KEMs across both, in order from either report.
     let offered: Vec<String> = dual
         .vanilla
         .as_ref()
@@ -181,39 +285,107 @@ fn print_dual(dual: &DualProbeReport) {
         .map(|t| t.kems_tried.iter().map(|k| k.offered.clone()).collect())
         .unwrap_or_default();
 
-    println!("KEMs (vanilla  vs  experimental):");
-    println!(
-        "  {:<24}  {:<16}  {:<16}",
-        "offered", "vanilla", "experimental"
-    );
+    println!("TLS KEMs (vanilla  vs  experimental):");
+    println!("  {:<24}  {:<16}  {:<16}", "offered", "vanilla", "experimental");
     for kem in &offered {
-        let v = if v_names.contains(kem) { "ok" } else { "-" };
-        let e = if e_names.contains(kem) { "ok" } else { "-" };
+        let v = if v_set.contains(kem) { "ok" } else { "-" };
+        let e = if e_set.contains(kem) { "ok" } else { "-" };
         println!("  {:<24}  {:<16}  {:<16}", kem, v, e);
     }
     println!();
-
-    println!("Diff:");
+    println!("TLS diff:");
     if dual.diff.only_experimental.is_empty() && dual.diff.only_vanilla.is_empty() {
         println!("  No TLS algorithms unlocked by oqs-provider on this target.");
-        println!("  (See the Phase 4 writeup for why this is a meaningful finding.)");
     } else {
         if !dual.diff.only_experimental.is_empty() {
             println!("  Only via oqs-provider ({}):", dual.diff.only_experimental.len());
-            for name in &dual.diff.only_experimental {
-                println!("    + {}", name);
+            for n in &dual.diff.only_experimental {
+                println!("    + {}", n);
             }
         }
         if !dual.diff.only_vanilla.is_empty() {
             println!("  Only via vanilla ({}):", dual.diff.only_vanilla.len());
-            for name in &dual.diff.only_vanilla {
-                println!("    - {}", name);
+            for n in &dual.diff.only_vanilla {
+                println!("    - {}", n);
             }
         }
     }
 }
 
-fn negotiated_set(tls: &pqc_probe_core::TlsReport) -> std::collections::HashSet<String> {
+fn print_ssh_single(report: &SshReport, experimental: bool) {
+    let label = if experimental { "SSH (experimental)" } else { "SSH" };
+    println!("{}:", label);
+    if let Some(v) = &report.server_version {
+        println!("  Server version:    {}", v);
+    }
+    println!("  Server offered KEX ({}):", report.server_offered_kex.len());
+    for k in &report.server_offered_kex {
+        let can = if report.client_can_negotiate.contains(k) { "✓" } else { " " };
+        println!("    {} {}", can, k);
+    }
+    println!();
+    println!("  Client can negotiate ({}):", report.client_can_negotiate.len());
+    for k in &report.client_can_negotiate {
+        println!("    + {}", k);
+    }
+}
+
+fn print_ssh_dual(dual: &DualSshReport) {
+    let server_offered: Vec<String> = dual
+        .vanilla
+        .as_ref()
+        .map(|r| r.server_offered_kex.clone())
+        .or_else(|| dual.experimental.as_ref().map(|r| r.server_offered_kex.clone()))
+        .unwrap_or_default();
+
+    let v_set: std::collections::HashSet<String> = dual
+        .vanilla
+        .as_ref()
+        .map(|r| r.client_can_negotiate.iter().cloned().collect())
+        .unwrap_or_default();
+    let e_set: std::collections::HashSet<String> = dual
+        .experimental
+        .as_ref()
+        .map(|r| r.client_can_negotiate.iter().cloned().collect())
+        .unwrap_or_default();
+
+    if let Some(v) = dual.vanilla.as_ref().and_then(|r| r.server_version.clone()) {
+        println!("SSH server version: {}", v);
+    }
+
+    println!();
+    println!("SSH KEX (server offer × client support):");
+    println!(
+        "  {:<40}  {:<16}  {:<16}",
+        "server offers", "mainline ssh", "OQS-OpenSSH"
+    );
+    for k in &server_offered {
+        let v = if v_set.contains(k) { "ok" } else { "-" };
+        let e = if e_set.contains(k) { "ok" } else { "-" };
+        println!("  {:<40}  {:<16}  {:<16}", k, v, e);
+    }
+
+    println!();
+    println!("SSH diff:");
+    if dual.diff.only_experimental.is_empty() && dual.diff.only_vanilla.is_empty() {
+        println!("  Mainline ssh and OQS-OpenSSH negotiate identically on this target.");
+    } else {
+        if !dual.diff.only_experimental.is_empty() {
+            println!("  Only via OQS-OpenSSH ({}):", dual.diff.only_experimental.len());
+            for n in &dual.diff.only_experimental {
+                println!("    + {}", n);
+            }
+        }
+        if !dual.diff.only_vanilla.is_empty() {
+            println!("  Only via mainline ssh ({}):", dual.diff.only_vanilla.len());
+            for n in &dual.diff.only_vanilla {
+                println!("    - {}", n);
+            }
+        }
+    }
+}
+
+fn negotiated_set_tls(tls: &pqc_probe_core::TlsReport) -> std::collections::HashSet<String> {
     tls.kems_tried
         .iter()
         .filter(|k| k.handshake_succeeded)
