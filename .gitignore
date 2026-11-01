@@ -1,0 +1,27 @@
+# Rust build output
+/target/
+**/*.rs.bk
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files — if you ever write a .env with openssl paths, keep it local
+.env
+.env.local
+
+# Scratch probe outputs
+/results/
+/scratch/
+*.log
+
+# Local notes you don't want pushed
+NOTES.md
+TODO.local.md
