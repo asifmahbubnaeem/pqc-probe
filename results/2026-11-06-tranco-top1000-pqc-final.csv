@@ -1,0 +1,1001 @@
+rank,domain,status,tls_version,cipher,cert_sig_alg,peer_sig_alg,kems_negotiated,has_x25519mlkem768,has_mlkem,probe_duration_ms,error_msg,pass,probe_host,fail_class
+1,google.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,439,,1,google.com,
+2,cloudflare.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5058,,1,cloudflare.com,
+3,ezviz7.com,no_handshake,,,,,,False,False,1524,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ezviz7.com,no_dns
+4,amazonaws.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,778,,1,amazonaws.com,
+5,facebook.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1632,,1,facebook.com,
+6,fbcdn.net,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,473,,1,fbcdn.net,
+7,gstatic.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,571,,1,gstatic.com,
+8,googleapis.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,574,,1,googleapis.com,
+9,hicloudcam.com,no_handshake,,,,,,False,False,1336,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,hicloudcam.com,no_dns
+10,youtube.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,true,true,159,,retry-2,youtube.com,
+11,microsoft.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,4649,,1,microsoft.com,
+12,apple.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,3465,,1,apple.com,
+13,akamai.net,no_handshake,,,,,,False,False,307,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamai.net,no_dns
+14,instagram.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1636,,1,instagram.com,
+15,akamaiedge.net,no_handshake,,,,,,False,False,1139,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamaiedge.net,no_dns
+16,twitter.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5018,,1,twitter.com,
+17,linkedin.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,142,,retry,linkedin.com,
+18,azure.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,648,,retry,azure.com,
+19,triplinkintl.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,4588,,www,www.triplinkintl.com,
+20,gwfb.net,no_handshake,,,,,,False,False,1004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gwfb.net,no_dns
+21,akadns.net,no_handshake,,,,,,False,False,567,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akadns.net,no_dns
+22,domaincontrol.com,no_handshake,,,,,,False,False,344,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,domaincontrol.com,no_443
+23,mail.ru,no_handshake,,,,,,False,False,1331,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,mail.ru,tls12_or_older
+24,googlevideo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,520,,1,googlevideo.com,
+25,googletagmanager.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,595,,1,googletagmanager.com,
+26,gtld-servers.net,no_handshake,,,,,,False,False,822,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gtld-servers.net,no_dns
+27,appsflyersdk.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,appsflyersdk.com,
+28,cloudfront.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cloudfront.net,no_dns
+29,amazon.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,649,,retry,amazon.com,
+30,shiabank.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,shiabank.com,no_443
+31,dzen.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,781,,retry,dzen.ru,
+32,office.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,1811,,1,office.com,
+33,sharepoint.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,1595,,1,sharepoint.com,
+34,github.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256,False,False,299,,1,github.com,
+35,live.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,1351,,1,live.com,
+36,aaplimg.com,no_handshake,,,,,,False,False,670,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,aaplimg.com,no_dns
+37,trafficmanager.net,no_handshake,,,,,,False,False,533,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,trafficmanager.net,no_dns
+38,lsrelayaccess.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,lsrelayaccess.com,tls_error
+39,wikipedia.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,377,,1,wikipedia.org,
+40,fastly.net,no_handshake,,,,,,False,False,4849,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,fastly.net,tls12_or_older
+41,cloud.microsoft,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,607,,retry,cloud.microsoft,
+42,apple-dns.net,no_handshake,,,,,,False,False,5008,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,apple-dns.net,no_dns
+43,netflix.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,639,,1,netflix.com,
+44,whatsapp.net,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,874,,1,whatsapp.net,
+45,office.net,no_handshake,,,,,,False,False,841,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,office.net,no_dns
+46,w2rt6byl5nf1opmc-a.com,no_handshake,,,,,,False,False,1140,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,w2rt6byl5nf1opmc-a.com,no_dns
+47,bing.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,1039,,1,bing.com,
+48,x.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,290,,1,x.com,
+49,googleusercontent.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,265,,1,googleusercontent.com,
+50,pv-cdn.net,no_handshake,,,,,,False,False,394,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,pv-cdn.net,no_dns
+51,doubleclick.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1456,,1,doubleclick.net,
+52,youtu.be,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1959,,1,youtu.be,
+53,googlesyndication.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1062,,1,googlesyndication.com,
+54,pinterest.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1387,,1,pinterest.com,
+55,icloud.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1871,,1,icloud.com,
+56,windows.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,4016,,1,windows.net,
+57,cloudflare.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,255,,1,cloudflare.net,
+58,gandi.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,1821,,1,gandi.net,
+59,myfritz.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,3216,,1,myfritz.net,
+60,goo.gl,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,184,,retry,goo.gl,
+61,adobe.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,4732,,1,adobe.com,
+62,zoom.us,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,543,,1,zoom.us,
+63,tiktok.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,4683,,1,tiktok.com,
+64,microsoftonline.com,no_handshake,,,,,,False,False,5006,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,microsoftonline.com,no_dns
+65,h264.io,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,h264.io,no_dns
+66,whatsapp.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,2901,,1,whatsapp.com,
+67,wordpress.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,703,,retry,wordpress.org,
+68,windowsupdate.com,no_handshake,,,,,,False,False,917,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,windowsupdate.com,no_dns
+69,googledomains.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,966,,1,googledomains.com,
+70,yahoo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,1518,,1,yahoo.com,
+71,gvt1.com,no_handshake,,,,,,False,False,904,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gvt1.com,no_dns
+72,wa.me,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1136,,1,wa.me,
+73,skype.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2692,,1,skype.com,
+74,edgekey.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1536,,www,www.edgekey.net,
+75,digicert.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,1001,,1,digicert.com,
+76,tiktokcdn.com,no_handshake,,,,,,False,False,933,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokcdn.com,no_dns
+77,spotify.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1425,,1,spotify.com,
+78,opera.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384,False,False,426,,retry,opera.com,
+79,roblox.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,662,,retry,roblox.com,
+80,a2z.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,a2z.com,no_dns
+81,b-cdn.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1159,,1,b-cdn.net,
+82,amazonvideo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,amazonvideo.com,
+83,workers.dev,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,827,,1,workers.dev,
+84,tiktokv.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,222,,retry,tiktokv.com,
+85,epicgames.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,653,,retry,epicgames.com,
+86,ntp.org,no_handshake,,,,,,False,False,3887,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ntp.org,tls12_or_older
+87,vimeo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,511,,1,vimeo.com,
+88,baidu.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,baidu.com,tls12_or_older
+89,blogspot.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,543,,1,blogspot.com,
+90,3gppnetwork.org,no_handshake,,,,,,False,False,623,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,3gppnetwork.org,no_dns
+91,qq.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,262,,retry-2,www.qq.com,
+92,mozilla.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1722,,1,mozilla.org,
+93,aws.dev,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,aws.dev,no_dns
+94,msn.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,175,,retry,msn.com,
+95,nginx.org,no_handshake,,,,,,False,False,1212,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nginx.org,tls12_or_older
+96,akam.net,no_handshake,,,,,,False,False,243,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akam.net,no_dns
+97,yandex.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256,False,False,680,,1,yandex.net,
+98,f5.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1222,,1,f5.com,
+99,wordpress.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,384,,1,wordpress.com,
+100,cdn77.org,no_handshake,,,,,,False,False,308,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdn77.org,no_dns
+101,dotaplabs.net,no_handshake,,,,,,False,False,839,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dotaplabs.net,no_dns
+102,t.me,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,620,,1,t.me,
+103,sentry.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,562,,1,sentry.io,
+104,virginm.net,no_handshake,,,,,,False,False,652,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,virginm.net,no_dns
+105,lencr.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,1646,,1,lencr.org,
+106,nginx.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1031,,1,nginx.com,
+107,reddit.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,377,,1,reddit.com,
+108,edgesuite.net,no_handshake,,,,,,False,False,243,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,edgesuite.net,no_dns
+109,intuit.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,3647,,1,intuit.com,
+110,2mdn.net,no_handshake,,,,,,False,False,382,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,2mdn.net,no_dns
+111,ui.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,ui.com,
+112,europa.eu,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,639,,retry,europa.eu,
+113,cdninstagram.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdninstagram.com,no_dns
+114,chatgpt.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,45,,retry,chatgpt.com,
+115,t-online.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1378,,1,t-online.de,
+116,yandex.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,539,,retry,yandex.ru,
+117,gvt2.com,no_handshake,,,,,,False,False,1140,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gvt2.com,no_dns
+118,bit.ly,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1129,,1,bit.ly,
+119,aliyuncs.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,2398,,1,aliyuncs.com,
+120,root-servers.net,no_handshake,,,,,,False,False,1315,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,root-servers.net,no_dns
+121,samsung.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,10001,,www,www.samsung.com,
+122,fastly-edge.com,no_handshake,,,,,,False,False,536,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,fastly-edge.com,no_dns
+123,ipify.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,228,,1,ipify.org,
+124,amazon.dev,no_handshake,,,,,,False,False,483,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,amazon.dev,no_dns
+125,yccdn.ru,no_handshake,,,,,,False,False,953,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,yccdn.ru,no_dns
+126,azurefd.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,290,,www,www.azurefd.net,
+127,registrar-servers.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,927,,retry,registrar-servers.com,
+128,openai.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,261,,1,openai.com,
+129,office365.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768,True,True,3308,,1,office365.com,
+130,adobe.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,658,,retry,adobe.io,
+131,okcdn.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2025,,1,okcdn.ru,
+132,android.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,585,,1,android.com,
+133,outlook.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384,False,False,2254,,1,outlook.com,
+134,dropbox.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,3477,,1,dropbox.com,
+135,github.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,4472,,1,github.io,
+136,webex.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,117,,www,www.webex.com,
+137,ytimg.com,no_handshake,,,,,,False,False,611,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ytimg.com,no_dns
+138,nih.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,915,,www,www.nih.gov,
+139,cloudflare-dns.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,374,,1,cloudflare-dns.com,
+140,akamaized.net,no_handshake,,,,,,False,False,509,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamaized.net,no_dns
+141,skybridge.click,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,2704,,1,skybridge.click,
+142,nflxso.net,no_handshake,,,,,,False,False,836,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nflxso.net,no_dns
+143,windows.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1818,,1,windows.com,
+144,apache.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,781,,1,apache.org,
+145,static.microsoft,no_handshake,,,,,,False,False,391,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,static.microsoft,no_dns
+146,supertms.com,no_handshake,,,,,,False,False,5006,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,supertms.com,no_dns
+147,dns-parking.com,no_handshake,,,,,,False,False,5011,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dns-parking.com,no_dns
+148,discord.gg,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,386,,1,discord.gg,
+149,nic.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2449,,1,nic.ru,
+150,tm-azurefd.net,no_handshake,,,,,,False,False,5011,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tm-azurefd.net,no_dns
+151,duckdns.org,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,duckdns.org,no_443
+152,vk.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,708,,retry,vk.ru,
+153,archive.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,578,,retry,archive.org,
+154,forms.gle,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,2395,,1,forms.gle,
+155,azurewebsites.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,azurewebsites.net,no_dns
+156,tumblr.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,2714,,1,tumblr.com,
+157,snapchat.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1347,,1,snapchat.com,
+158,crashlytics.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,179,,retry,crashlytics.com,
+159,vk.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,681,,1,vk.com,
+160,dnsowl.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dnsowl.com,no_dns
+161,nytimes.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1277,,1,nytimes.com,
+162,godaddy.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,289,,1,godaddy.com,
+163,spo-msedge.net,no_handshake,,,,,,False,False,500,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,spo-msedge.net,no_dns
+164,jomodns.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,jomodns.com,no_dns
+165,telegram.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,2700,,1,telegram.org,
+166,ubuntu.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2810,,1,ubuntu.com,
+167,gravatar.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,5146,,1,gravatar.com,
+168,amazon-adsystem.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,amazon-adsystem.com,no_443
+169,telekom.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1561,,1,telekom.net,
+170,samsungcloud.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,samsungcloud.com,
+171,shopify.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,190,,1,shopify.com,
+172,reg.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1487,,1,reg.ru,
+173,trbcdn.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-384,False,False,1449,,1,trbcdn.net,
+174,ax-msedge.net,no_handshake,,,,,,False,False,586,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ax-msedge.net,no_dns
+175,paypal.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,5004,,1,paypal.com,
+176,google-analytics.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,213,,1,google-analytics.com,
+177,example.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5002,,1,example.com,
+178,pages.dev,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,576,,1,pages.dev,
+179,astrumu.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,1673,,1,astrumu.io,
+180,tbcache.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tbcache.com,no_443
+181,kaspersky.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1879,,1,kaspersky.com,
+182,meraki.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,meraki.com,
+183,scorecardresearch.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,1166,,1,scorecardresearch.com,
+184,flickr.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,flickr.com,
+185,ksyuncdn.com,no_handshake,,,,,,False,False,297,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ksyuncdn.com,no_dns
+186,nflximg.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1043,,www,www.nflximg.com,
+187,discord.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,395,,1,discord.com,
+188,creativecommons.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,319,,1,creativecommons.org,
+189,w3.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5022,,1,w3.org,
+190,comcast.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,845,,www,www.comcast.net,
+191,awswaf.com,no_handshake,,,,,,False,False,5007,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,awswaf.com,no_dns
+192,cnn.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,X25519;P-256;P-384;X25519MLKEM768,True,True,1288,,1,cnn.com,
+193,ebay.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,2861,,1,ebay.com,
+194,soundcloud.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,soundcloud.com,
+195,quickconnect.to,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,quickconnect.to,tls12_or_older
+196,macromedia.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,846,,www,www.macromedia.com,
+197,afternic.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,755,,1,afternic.com,
+198,unity3d.com,no_handshake,,,,,,False,False,216,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,unity3d.com,tls12_or_older
+199,pki.goog,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,483,,1,pki.goog,
+200,hichina.com,no_handshake,,,,,,False,False,611,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,hichina.com,no_dns
+201,forter.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,217,,1,forter.com,
+202,theguardian.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;X25519MLKEM768,True,True,5002,,1,theguardian.com,
+203,youtube-nocookie.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,683,,1,youtube-nocookie.com,
+204,firefox-portal-detection.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,5003,,1,firefox-portal-detection.com,
+205,medium.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,785,,1,medium.com,
+206,stripe.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,1561,,1,stripe.com,
+207,skyhigh.cloud,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,800,,1,skyhigh.cloud,
+208,omtrdc.net,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,omtrdc.net,no_dns
+209,doi.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,77,,retry,doi.org,
+210,msedge.net,no_handshake,,,,,,False,False,5005,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,msedge.net,no_443
+211,mts.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,2035,,1,mts.ru,
+212,vkuserphoto.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2801,,1,vkuserphoto.ru,
+213,azureedge.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,841,,www,www.azureedge.net,
+214,mtgglobals.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.mtgglobals.com,
+215,oracle.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,6136,,www,www.oracle.com,
+216,iiko.it,no_handshake,,,,,,False,False,1235,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,iiko.it,no_dns
+217,hcaptcha.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5045,,1,hcaptcha.com,
+218,ttdns2.com,no_handshake,,,,,,False,False,308,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ttdns2.com,no_dns
+219,app-measurement.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,452,,1,app-measurement.com,
+220,bbc.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,338,,retry,bbc.com,
+221,publicnode.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,535,,1,publicnode.com,
+222,bybanking.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bybanking.com,no_443
+223,licdn.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,562,,retry-2,www.licdn.com,
+224,cdngslb.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdngslb.com,no_443
+225,wikimedia.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,929,,1,wikimedia.org,
+226,criteo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1154,,1,criteo.com,
+227,xiaomi.com,no_handshake,,,,,,False,False,3079,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,xiaomi.com,tls12_or_older
+228,forbes.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1863,,www,www.forbes.com,
+229,roku.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,545,,1,roku.com,
+230,weather.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,843,,1,weather.com,
+231,ailawandorder.com,no_handshake,,,,,,False,False,1229,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ailawandorder.com,tls12_or_older
+232,twitch.tv,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,963,,1,twitch.tv,
+233,researchgate.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,517,,1,researchgate.net,
+234,sciencedirect.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,497,,1,sciencedirect.com,
+235,mit.edu,no_handshake,,,,,,False,False,1514,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,mit.edu,tls12_or_older
+236,rbxcdn.com,no_handshake,,,,,,False,False,588,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,rbxcdn.com,no_dns
+237,amplitude.com,no_handshake,,,,,,False,False,977,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,amplitude.com,tls12_or_older
+238,googletagservices.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,10002,,www,www.googletagservices.com,
+239,nist.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,P-256;P-384;X25519MLKEM768,True,True,665,,retry,nist.gov,
+240,namecheap.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp384r1_sha384,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,628,,1,namecheap.com,
+241,applovin.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,862,,1,applovin.com,
+242,bbc.co.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,225,,retry,bbc.co.uk,
+243,cpanel.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1020,,1,cpanel.net,
+244,shifen.com,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,shifen.com,no_443
+245,msftconnecttest.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,642,,www,www.msftconnecttest.com,
+246,cisco.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1587,,www,www.cisco.com,
+247,t.co,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,249,,1,t.co,
+248,playstation.net,no_handshake,,,,,,False,False,5006,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,playstation.net,no_dns
+249,wsdvs.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,wsdvs.com,no_dns
+250,sourceforge.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,380,,1,sourceforge.net,
+251,adtrafficquality.google,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,644,,1,adtrafficquality.google,
+252,dnsmadeeasy.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,868,,1,dnsmadeeasy.com,
+253,icanhazip.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,266,,1,icanhazip.com,
+254,brave.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,brave.com,
+255,aliyuncsslbintl.com,no_handshake,,,,,,False,False,455,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,aliyuncsslbintl.com,no_dns
+256,bytefcdn-oversea.com,no_handshake,,,,,,False,False,351,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bytefcdn-oversea.com,no_dns
+257,name-services.com,no_handshake,,,,,,False,False,836,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,name-services.com,no_dns
+258,alibabadns.com,no_handshake,,,,,,False,False,658,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,alibabadns.com,no_dns
+259,avcdn.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,929,,www,www.avcdn.net,
+260,yandexcloud.net,no_handshake,,,,,,False,False,363,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,yandexcloud.net,no_dns
+261,hubspot.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,255,,1,hubspot.com,
+262,sfx.ms,no_handshake,,,,,,False,False,272,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,sfx.ms,no_dns
+263,imdb.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,4627,,1,imdb.com,
+264,linktr.ee,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,linktr.ee,tls12_or_older
+265,namebrightdns.com,no_handshake,,,,,,False,False,358,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,namebrightdns.com,no_dns
+266,cdn-apple.com,no_handshake,,,,,,False,False,198,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdn-apple.com,no_dns
+267,mybluehost.me,no_handshake,,,,,,False,False,148,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,mybluehost.me,tls13_unstable
+268,alidns.com,no_handshake,,,,,,False,False,2932,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,alidns.com,tls12_or_older
+269,who.int,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,198,,1,who.int,
+270,googleblog.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,279,,1,googleblog.com,
+271,vedcdnlb.com,no_handshake,,,,,,False,False,787,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vedcdnlb.com,no_dns
+272,akamaihd.net,no_handshake,,,,,,False,False,859,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamaihd.net,no_dns
+273,xcal.tv,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,xcal.tv,no_dns
+274,wixsite.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,6093,,www,www.wixsite.com,
+275,ttvnw.net,no_handshake,,,,,,False,False,635,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ttvnw.net,no_dns
+276,geobasket.ru,no_handshake,,,,,,False,False,674,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,geobasket.ru,no_dns
+277,ozon.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,847,,1,ozon.ru,
+278,googleadservices.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,365,,1,googleadservices.com,
+279,ibm.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,290,,1,ibm.com,
+280,arubanetworks.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,900,,1,arubanetworks.com,
+281,datadoghq.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,datadoghq.com,
+282,salesforce.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,769,,1,salesforce.com,
+283,hp.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,hp.com,
+284,reuters.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.reuters.com,
+285,demdex.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,1914,,retry-2,www.demdex.net,
+286,launchpad.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1534,,1,launchpad.net,
+287,canva.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,retry,canva.com,
+288,launchdarkly.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,554,,1,launchdarkly.com,
+289,booking.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,booking.com,
+290,telegram.me,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,3469,,1,telegram.me,
+291,centinel-analytica.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,252,,retry,centinel-analytica.com,
+292,slack.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,164,,retry,slack.com,
+293,app-analytics-services.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,123,,retry,app-analytics-services.com,
+294,archive.ph,no_handshake,,,,,,False,False,5009,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,archive.ph,tls_error
+295,www.gov.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,370,,retry,www.gov.uk,
+296,tinyurl.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,233,,1,tinyurl.com,
+297,nature.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,353,,retry,nature.com,
+298,myshopify.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,247,,1,myshopify.com,
+299,steampowered.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,326,,1,steampowered.com,
+300,userapi.com,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,userapi.com,tls_error
+301,media-amazon.com,no_handshake,,,,,,False,False,380,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,media-amazon.com,no_dns
+302,ggpht.com,no_handshake,,,,,,False,False,373,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ggpht.com,no_dns
+303,tiktokcdn-us.com,no_handshake,,,,,,False,False,281,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokcdn-us.com,no_dns
+304,gamepass.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,747,,1,gamepass.com,
+305,manulife-sinochem.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,13388,,retry-2,www.manulife-sinochem.com,
+306,alibaba.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,2267,,1,alibaba.com,
+307,springer.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,677,,1,springer.com,
+308,wac-msedge.net,no_handshake,,,,,,False,False,492,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,wac-msedge.net,no_dns
+309,grammarly.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,grammarly.com,
+310,jsdelivr.net,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,jsdelivr.net,no_443
+311,byteoversea.net,no_handshake,,,,,,False,False,323,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,byteoversea.net,no_dns
+312,online-metrix.net,no_handshake,,,,,,False,False,288,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,online-metrix.net,no_dns
+313,msftncsi.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,74,,www,www.msftncsi.com,
+314,miui.com,no_handshake,,,,,,False,False,1459,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,miui.com,tls12_or_older
+315,cloudflareinsights.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,173,,1,cloudflareinsights.com,
+316,avast.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,553,,1,avast.com,
+317,ip-api.com,no_handshake,,,,,,False,False,540,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ip-api.com,tls12_or_older
+318,douyincdn.com,no_handshake,,,,,,False,False,477,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,douyincdn.com,no_dns
+319,vungle.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1416,,1,vungle.com,
+320,wiley.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,473,,1,wiley.com,
+321,crcdn.pro,no_handshake,,,,,,False,False,805,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,crcdn.pro,no_dns
+322,debian.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1270,,1,debian.org,
+323,onelink.me,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,onelink.me,
+324,anthropic.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,302,,1,anthropic.com,
+325,heytapmobile.com,no_handshake,,,,,,False,False,333,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,heytapmobile.com,no_dns
+326,weibo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,784,,1,weibo.com,
+327,harvard.edu,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384,False,False,445,,1,harvard.edu,
+328,steamserver.net,no_handshake,,,,,,False,False,362,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,steamserver.net,no_dns
+329,amazon.co.uk,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,645,,1,amazon.co.uk,
+330,autodesk.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,673,,retry,autodesk.com,
+331,rubiconproject.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,rubiconproject.com,
+332,telecid.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,2820,,1,telecid.ru,
+333,archive.is,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,archive.is,tls_error
+334,etsy.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,230,,www,www.etsy.com,
+335,casalemedia.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,490,,1,casalemedia.com,
+336,ok.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,2192,,1,ok.ru,
+337,zendesk.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,742,,1,zendesk.com,
+338,vercel-dns-016.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,607,,www,www.vercel-dns-016.com,
+339,volcfcdndvs.com,no_handshake,,,,,,False,False,933,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,volcfcdndvs.com,no_dns
+340,gmail.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,85,,retry,gmail.com,
+341,unisys.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,109,,retry,unisys.com,
+342,mi.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1472,,1,mi.com,
+343,clarity.ms,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768,True,True,665,,retry,clarity.ms,
+344,pubmatic.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,pubmatic.com,
+345,php.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,795,,1,php.net,
+346,smartadserver.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,869,,1,smartadserver.com,
+347,naver.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,679,,1,naver.com,
+348,espn.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,retry,espn.com,
+349,imcmdb.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,imcmdb.net,no_443
+350,nflxvideo.net,no_handshake,,,,,,False,False,608,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nflxvideo.net,tls13_unstable
+351,bilibili.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1830,,1,bilibili.com,
+352,trustpilot.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,631,,1,trustpilot.com,
+353,ea.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,3697,,1,ea.com,
+354,gnu.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1552,,1,gnu.org,
+355,branch.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,branch.io,
+356,tp-link.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,tp-link.com,
+357,weebly.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,320,,1,weebly.com,
+358,tradingview.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,tradingview.com,
+359,spov-msedge.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,spov-msedge.net,no_dns
+360,paloaltonetworks.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,769,,1,paloaltonetworks.com,
+361,nvidia.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,131,,www,www.nvidia.com,
+362,dell.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,212,,www,www.dell.com,
+363,browser-intake-datadoghq.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1196,,1,browser-intake-datadoghq.com,
+364,checkpoint.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,checkpoint.com,
+365,charter.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1220,,1,charter.net,
+366,plex.direct,no_handshake,,,,,,False,False,533,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,plex.direct,no_443
+367,aliyun.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,119,,www,www.aliyun.com,
+368,cdc.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,630,,1,cdc.gov,
+369,dotomi.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,813,,www,www.dotomi.com,
+370,grammarly.io,no_handshake,,,,,,False,False,554,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,grammarly.io,no_dns
+371,un.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.un.org,
+372,worldnic.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,worldnic.com,no_443
+373,cm.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,307,,1,cm.com,
+374,okta.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,okta.com,
+375,wsj.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,wsj.com,
+376,cdnbuild.net,no_handshake,,,,,,False,False,732,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdnbuild.net,no_dns
+377,google.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,475,,1,google.cn,
+378,gitlab.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,44,,retry,gitlab.com,
+379,amazon.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,509,,1,amazon.de,
+380,bsky.app,no_handshake,,,,,,False,False,760,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bsky.app,tls12_or_older
+381,stanford.edu,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,1257,,www,www.stanford.edu,
+382,allawnos.com,no_handshake,,,,,,False,False,182,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,allawnos.com,no_dns
+383,on.aws,no_handshake,,,,,,False,False,199,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,on.aws,no_dns
+384,dns.google,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,181,,1,dns.google,
+385,nasa.gov,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384,False,False,250,,1,nasa.gov,
+386,wps.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,280,,1,wps.com,
+387,issuu.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,370,,1,issuu.com,
+388,shopifysvc.com,no_handshake,,,,,,False,False,246,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,shopifysvc.com,no_dns
+389,globo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1721,,1,globo.com,
+390,netease.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,15002,,retry-2,www.netease.com,
+391,myhuaweicloud.com,no_handshake,,,,,,False,False,655,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,myhuaweicloud.com,no_dns
+392,opendns.com,no_handshake,,,,,,False,False,838,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,opendns.com,tls12_or_older
+393,name.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,193,,1,name.com,
+394,dynatrace.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,dynatrace.com,
+395,bloomberg.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,815,,1,bloomberg.com,
+396,go.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.go.com,
+397,xboxlive.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2220,,1,xboxlive.com,
+398,elasticbeanstalk.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,elasticbeanstalk.com,tls_error
+399,tiktokv.us,no_handshake,,,,,,False,False,303,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokv.us,no_dns
+400,washingtonpost.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,washingtonpost.com,
+401,live-video.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,live-video.net,
+402,adnxs.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,adnxs.com,tls12_or_older
+403,plesk.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,406,,1,plesk.com,
+404,cookiedatabase.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,709,,1,cookiedatabase.org,
+405,samsungcloudsolution.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,samsungcloudsolution.com,no_dns
+406,atlassian.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,atlassian.net,
+407,githubusercontent.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1529,,www,www.githubusercontent.com,
+408,amazontrust.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,retry,amazontrust.com,
+409,awsglobalaccelerator.com,no_handshake,,,,,,False,False,267,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,awsglobalaccelerator.com,no_dns
+410,chatgpt.site,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,574,,1,chatgpt.site,
+411,impervadns.net,no_handshake,,,,,,False,False,281,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,impervadns.net,no_dns
+412,ibyteimg.com,no_handshake,,,,,,False,False,374,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ibyteimg.com,no_dns
+413,spotifycdn.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,204,,www,www.spotifycdn.com,
+414,claude.ai,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1305,,1,claude.ai,
+415,yandex.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,1385,,1,yandex.com,
+416,scdn.co,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,785,,www,www.scdn.co,
+417,capcutapi.com,no_handshake,,,,,,False,False,204,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,capcutapi.com,no_dns
+418,firetvcaptiveportal.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,firetvcaptiveportal.com,no_443
+419,calendly.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,435,,1,calendly.com,
+420,ripn.net,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ripn.net,no_dns
+421,spaceweb.pro,no_handshake,,,,,,False,False,1269,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,spaceweb.pro,no_443
+422,adobe.net,no_handshake,,,,,,False,False,943,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,adobe.net,tls12_or_older
+423,aol.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1088,,1,aol.com,
+424,duckduckgo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1414,,1,duckduckgo.com,
+425,substack.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,686,,1,substack.com,
+426,163.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,1707,,retry-2,www.163.com,
+427,gcdn.co,no_handshake,,,,,,False,False,684,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gcdn.co,tls13_unstable
+428,line.me,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,519,,1,line.me,
+429,indeed.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,404,,1,indeed.com,
+430,sberbank.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,1330,,1,sberbank.ru,
+431,expireddomains.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,380,,1,expireddomains.com,
+432,unsplash.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,unsplash.com,tls12_or_older
+433,steamcommunity.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,370,,1,steamcommunity.com,
+434,temu.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,309,,1,temu.com,
+435,vkuser.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vkuser.net,no_443
+436,kwai-pro.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,269,,www,www.kwai-pro.com,
+437,tiktokcdn-eu.com,no_handshake,,,,,,False,False,364,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokcdn-eu.com,no_dns
+438,tencent-cloud.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tencent-cloud.net,no_443
+439,telekom.de,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,X25519;P-256;P-384;P-521,False,False,806,,1,telekom.de,
+440,nr-data.net,no_handshake,,,,,,False,False,356,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nr-data.net,no_dns
+441,tiktokv.eu,no_handshake,,,,,,False,False,278,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokv.eu,no_dns
+442,dailymotion.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,585,,1,dailymotion.com,
+443,heytapdl.com,no_handshake,,,,,,False,False,236,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,heytapdl.com,no_dns
+444,netcraze.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,P-256,False,False,1449,,1,netcraze.io,
+445,beian.gov.cn,no_handshake,,,,,,False,False,643,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,beian.gov.cn,no_dns
+446,mangosip.ru,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,mangosip.ru,no_443
+447,withgoogle.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,246,,1,withgoogle.com,
+448,drom.ru,no_handshake,,,,,,False,False,1604,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,drom.ru,tls12_or_older
+449,netangels.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,718,,1,netangels.ru,
+450,tiktokpangle.us,no_handshake,,,,,,False,False,344,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokpangle.us,no_dns
+451,statsigapi.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,270,,1,statsigapi.net,
+452,intel.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,688,,1,intel.com,
+453,myqcloud.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,myqcloud.com,no_443
+454,bluehost.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,693,,1,bluehost.com,
+455,gandi-ns.fr,no_handshake,,,,,,False,False,757,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gandi-ns.fr,no_dns
+456,arxiv.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,156,,retry,arxiv.org,
+457,adobedc.net,no_handshake,,,,,,False,False,377,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,adobedc.net,no_dns
+458,hostgator.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,96,,retry,hostgator.com,
+459,vercel-dns-017.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,4472,,www,www.vercel-dns-017.com,
+460,twimg.com,no_handshake,,,,,,False,False,294,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,twimg.com,no_dns
+461,taobao.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,3481,,1,taobao.com,
+462,eye4.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,861,,1,eye4.cn,
+463,g.page,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,467,,1,g.page,
+464,dropcatch.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,521,,1,dropcatch.com,
+465,yahoo.co.jp,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1282,,1,yahoo.co.jp,
+466,lijit.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,lijit.com,
+467,aliexpress.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,10003,,www,www.aliexpress.com,
+468,pixabay.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,317,,1,pixabay.com,
+469,run.app,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,426,,1,run.app,
+470,featureassets.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,415,,1,featureassets.org,
+471,pushy.io,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,pushy.io,tls12_or_older
+472,mcafee.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,524,,www,www.mcafee.com,
+473,duolingo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10003,,www,www.duolingo.com,
+474,prodregistryv2.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1239,,1,prodregistryv2.org,
+475,speedtest.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,462,,1,speedtest.net,
+476,alicdn.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,alicdn.com,no_443
+477,azure-dns.com,no_handshake,,,,,,False,False,5005,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,azure-dns.com,no_dns
+478,huawei.com,no_handshake,,,,,,False,False,1276,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,huawei.com,tls12_or_older
+479,shein.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2347,,1,shein.com,
+480,nexthink.cloud,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nexthink.cloud,no_dns
+481,walmart.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,199,,retry,walmart.com,
+482,businessinsider.com,no_handshake,,,,,,False,False,491,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,businessinsider.com,tls12_or_older
+483,cnbc.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,705,,retry,cnbc.com,
+484,kwai.net,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,kwai.net,no_443
+485,kaspersky-labs.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp384r1_sha384,X25519;P-256;P-384;P-521,false,false,1596,,retry-2,www.kaspersky-labs.com,
+486,goodreads.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,913,,1,goodreads.com,
+487,dual-s-msedge.net,no_handshake,,,,,,False,False,296,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dual-s-msedge.net,no_dns
+488,inmobi.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,763,,1,inmobi.com,
+489,wp.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,298,,1,wp.com,
+490,nmrodam.com,no_handshake,,,,,,False,False,292,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nmrodam.com,no_dns
+491,mzstatic.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,372,,1,mzstatic.com,
+492,trendmicro.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,P-384,False,False,1594,,1,trendmicro.com,
+493,ietf.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,178,,1,ietf.org,
+494,facebook.net,no_handshake,,,,,,False,False,365,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,facebook.net,no_dns
+495,amazon.co.jp,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2451,,1,amazon.co.jp,
+496,bx-msedge.net,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bx-msedge.net,no_dns
+497,dyndns.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2122,,1,dyndns.org,
+498,scribd.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,924,,1,scribd.com,
+499,fandom.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5002,,1,fandom.com,
+500,braze.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5002,,1,braze.com,
+501,ui-dns.com,no_handshake,,,,,,False,False,480,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ui-dns.com,no_dns
+502,eventbrite.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,eventbrite.com,
+503,quora.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5003,,1,quora.com,
+504,statista.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,statista.com,
+505,teamviewer.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,389,,1,teamviewer.com,
+506,sina.com.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,1991,,1,sina.com.cn,
+507,list-manage.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,list-manage.com,no_443
+508,foxnews.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,564,,1,foxnews.com,
+509,markmonitor.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,369,,1,markmonitor.com,
+510,visualstudio.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,449,,1,visualstudio.com,
+511,squarespacedns.com,no_handshake,,,,,,False,False,722,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,squarespacedns.com,no_dns
+512,addtoany.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,224,,1,addtoany.com,
+513,bunnyinfra.net,no_handshake,,,,,,False,False,324,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bunnyinfra.net,no_dns
+514,selectel.ru,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,selectel.ru,tls12_or_older
+515,npr.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,npr.org,
+516,ampproject.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,485,,1,ampproject.org,
+517,playstation.com,no_handshake,,,,,,False,False,734,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,playstation.com,tls12_or_older
+518,indiatimes.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,333,,1,indiatimes.com,
+519,blogger.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,428,,1,blogger.com,
+520,google.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,630,,1,google.de,
+521,taboola.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,268,,1,taboola.com,
+522,openstreetmap.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,223,,1,openstreetmap.org,
+523,share.google,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,323,,1,share.google,
+524,force.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,1558,,1,force.com,
+525,tplinkcloud.com,no_handshake,,,,,,False,False,333,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tplinkcloud.com,tls12_or_older
+526,amzn.to,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,428,,1,amzn.to,
+527,oraclecloud.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,245,,www,www.oraclecloud.com,
+528,rocket-cdn.com,no_handshake,,,,,,False,False,273,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,rocket-cdn.com,no_dns
+529,dnspod.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dnspod.net,no_443
+530,xiaomi.net,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,xiaomi.net,tls12_or_older
+531,footprintdns.com,no_handshake,,,,,,False,False,303,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,footprintdns.com,no_dns
+532,appsflyer.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,105,,www,www.appsflyer.com,
+533,ddnss.de,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ddnss.de,no_443
+534,shop.app,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,277,,1,shop.app,
+535,behance.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,395,,1,behance.net,
+536,openx.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,262,,1,openx.net,
+537,docker.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,185,,retry,docker.com,
+538,noaa.gov,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.noaa.gov,
+539,bdydns.com,no_handshake,,,,,,False,False,579,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bdydns.com,no_dns
+540,klaviyo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,klaviyo.com,
+541,google.com.hk,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,251,,1,google.com.hk,
+542,wbx2.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,wbx2.com,no_443
+543,sc-gw.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,sc-gw.com,no_dns
+544,mysql.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1269,,www,www.mysql.com,
+545,capcut.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,5002,,1,capcut.com,
+546,adsafeprotected.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,adsafeprotected.com,
+547,tandfonline.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,247,,1,tandfonline.com,
+548,stackoverflow.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,244,,1,stackoverflow.com,
+549,ft.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,ft.com,
+550,ipv4only.arpa,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ipv4only.arpa,no_443
+551,mozilla.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,5002,,1,mozilla.com,
+552,firefox.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,329,,1,firefox.com,
+553,timeweb.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,854,,1,timeweb.ru,
+554,oup.com,no_handshake,,,,,,False,False,422,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,oup.com,tls12_or_older
+555,nease.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nease.net,no_443
+556,crpt.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,922,,1,crpt.ru,
+557,slideshare.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,301,,1,slideshare.net,
+558,adobedtm.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,adobedtm.com,no_dns
+559,miit.gov.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,4442,,www,www.miit.gov.cn,
+560,fast.com,no_handshake,,,,,,False,False,547,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,fast.com,tls12_or_older
+561,juicyscore.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1250,,1,juicyscore.com,
+562,icloud-content.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,742,,1,icloud-content.com,
+563,exp-tas.com,no_handshake,,,,,,False,False,239,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,exp-tas.com,no_dns
+564,cornell.edu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,1901,,www,www.cornell.edu,
+565,telefonica.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1030,,1,telefonica.de,
+566,supercell.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,supercell.com,
+567,discord.media,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,210,,1,discord.media,
+568,sohu.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,1052,,1,sohu.com,
+569,wired.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,380,,1,wired.com,
+570,comcast.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,6936,,www,www.comcast.com,
+571,dreamhost.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,dreamhost.com,
+572,mega.co.nz,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,647,,1,mega.co.nz,
+573,uol.com.br,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.uol.com.br,
+574,byteglb.com,no_handshake,,,,,,False,False,240,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,byteglb.com,no_dns
+575,e2ro.com,no_handshake,,,,,,False,False,251,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,e2ro.com,no_dns
+576,svc.ms,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,352,,www,www.svc.ms,
+577,trueconf.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1441,,1,trueconf.net,
+578,adriver.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-521;X25519MLKEM768,True,True,5003,,1,adriver.ru,
+579,threads.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,210,,1,threads.com,
+580,time.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,512,,1,time.com,
+581,eset.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,652,,1,eset.com,
+582,deviantart.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,deviantart.com,
+583,atlassian.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,atlassian.com,
+584,qlivecdn.com,no_handshake,,,,,,False,False,493,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,qlivecdn.com,no_dns
+585,ca.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,541,,1,ca.gov,
+586,cloudns.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,727,,1,cloudns.net,
+587,tripadvisor.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,tripadvisor.com,
+588,3lift.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5006,,1,3lift.com,
+589,media.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1057,,1,media.net,
+590,squarespace.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,603,,1,squarespace.com,
+591,rakuten.co.jp,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1863,,1,rakuten.co.jp,
+592,mediatek.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,205,,www,www.mediatek.com,
+593,360yield.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,558,,1,360yield.com,
+594,samsungqbe.com,no_handshake,,,,,,False,False,312,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,samsungqbe.com,no_dns
+595,whecloud.com,no_handshake,,,,,,False,False,317,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,whecloud.com,no_dns
+596,usgovcloudapi.net,no_handshake,,,,,,False,False,671,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,usgovcloudapi.net,no_dns
+597,dailymail.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,243,,1,dailymail.com,
+598,amagi.tv,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,amagi.tv,tls13_unstable
+599,live.net,no_handshake,,,,,,False,False,218,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,live.net,no_dns
+600,adsrvr.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,adsrvr.org,
+601,edgecdn.ru,no_handshake,,,,,,False,False,2197,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,edgecdn.ru,tls13_unstable
+602,jquery.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,198,,1,jquery.com,
+603,wix.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,803,,1,wix.com,
+604,newrelic.com,no_handshake,,,,,,False,False,1051,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,newrelic.com,tls12_or_older
+605,digitalocean.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,357,,1,digitalocean.com,
+606,vercel.app,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,849,,1,vercel.app,
+607,dyingbirds.com,no_handshake,,,,,,False,False,456,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dyingbirds.com,no_dns
+608,wildberries.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,1816,,1,wildberries.ru,
+609,chinamobile.com,no_handshake,,,,,,False,False,5005,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,chinamobile.com,no_443
+610,target.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,5006,,1,target.com,
+611,ieee.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,906,,1,ieee.org,
+612,ivi.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,1095,,1,ivi.ru,
+613,aboutads.info,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,849,,1,aboutads.info,
+614,free.fr,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,3927,,1,free.fr,
+615,ezvizlife.com,no_handshake,,,,,,False,False,684,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ezvizlife.com,tls12_or_older
+616,sophos.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,198,,retry,sophos.com,
+617,vercel-dns-3.com,no_handshake,,,,,,False,False,379,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vercel-dns-3.com,no_dns
+618,mdpi.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,76,,retry,mdpi.com,
+619,rlcdn.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,128,,www,www.rlcdn.com,
+620,vidaahub.com,no_handshake,,,,,,False,False,5005,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vidaahub.com,no_dns
+621,flurry.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,342,,1,flurry.com,
+622,herokudns.com,no_handshake,,,,,,False,False,402,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,herokudns.com,no_dns
+623,usatoday.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,2648,,1,usatoday.com,
+624,unesco.org,no_handshake,,,,,,False,False,898,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,unesco.org,tls12_or_older
+625,sagepub.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,290,,1,sagepub.com,
+626,nintendo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,229,,www,www.nintendo.com,
+627,ks-cdn.com,no_handshake,,,,,,False,False,773,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ks-cdn.com,no_dns
+628,immedia-semi.com,no_handshake,,,,,,False,False,343,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,immedia-semi.com,no_dns
+629,hotjar.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,hotjar.com,
+630,0xrpc.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384,False,False,653,,1,0xrpc.io,
+631,telegraph.co.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,telegraph.co.uk,
+632,techcrunch.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,635,,1,techcrunch.com,
+633,berkeley.edu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,332,,retry,berkeley.edu,
+634,usercontent.goog,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,366,,1,usercontent.goog,
+635,goskope.com,no_handshake,,,,,,False,False,373,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,goskope.com,no_dns
+636,vecdnlb.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vecdnlb.com,no_dns
+637,translate.goog,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,892,,1,translate.goog,
+638,share-dns.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,357,,www,www.share-dns.com,
+639,ikea.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,322,,1,ikea.com,
+640,amazon.fr,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2890,,1,amazon.fr,
+641,samsungapps.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,samsungapps.com,no_443
+642,amazon.ca,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,877,,1,amazon.ca,
+643,avito.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,733,,1,avito.ru,
+644,accuweather.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,749,,1,accuweather.com,
+645,intercom.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,intercom.io,
+646,onetrust.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,218,,1,onetrust.com,
+647,merriam-webster.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,merriam-webster.com,
+648,hicloud.com,no_handshake,,,,,,False,False,317,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,hicloud.com,no_dns
+649,telephony.goog,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,telephony.goog,tls12_or_older
+650,hstgr.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,hstgr.net,tls13_unstable
+651,doubleverify.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,244,,1,doubleverify.com,
+652,msidentity.com,no_handshake,,,,,,False,False,297,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,msidentity.com,no_dns
+653,optimizely.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,470,,1,optimizely.com,
+654,jotform.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,891,,1,jotform.com,
+655,verisign.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,744,,1,verisign.com,
+656,box.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,259,,1,box.com,
+657,stackadapt.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-384,False,False,798,,1,stackadapt.com,
+658,ups.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,934,,1,ups.com,
+659,service.gov.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,950,,1,service.gov.uk,
+660,beget.ru,no_handshake,,,,,,False,False,1361,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,beget.ru,no_443
+661,meta.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,308,,1,meta.com,
+662,gosuslugi.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,1580,,1,gosuslugi.ru,
+663,bytedns1.com,no_handshake,,,,,,False,False,467,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bytedns1.com,no_dns
+664,iso.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,286,,1,iso.org,
+665,tencent.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,1425,,retry-2,www.tencent.com,
+666,loc.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,296,,1,loc.gov,
+667,bamgrid.com,no_handshake,,,,,,False,False,353,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bamgrid.com,no_dns
+668,smaato.net,no_handshake,,,,,,False,False,287,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,smaato.net,no_dns
+669,netflix.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,1998,,1,netflix.net,
+670,t-msedge.net,no_handshake,,,,,,False,False,311,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,t-msedge.net,no_dns
+671,workbox.dk,no_handshake,,,,,,False,False,307,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,workbox.dk,no_dns
+672,ring.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,801,,1,ring.com,
+673,singtelchina.cn,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,singtelchina.cn,no_dns
+674,amazon.in,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,581,,1,amazon.in,
+675,conviva.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,142,,1,conviva.com,
+676,maricopa.gov,no_handshake,,,,,,False,False,269,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,maricopa.gov,tls12_or_older
+677,nike.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,nike.com,
+678,elpais.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,371,,1,elpais.com,
+679,redhat.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,758,,1,redhat.com,
+680,bidswitch.net,no_handshake,,,,,,False,False,476,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bidswitch.net,no_dns
+681,primevideo.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,primevideo.com,
+682,dashnxdomain.net,no_handshake,,,,,,False,False,784,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dashnxdomain.net,no_dns
+683,herokuapp.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,786,,www,www.herokuapp.com,
+684,britannica.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,93,,www,www.britannica.com,
+685,imrworldwide.com,no_handshake,,,,,,False,False,381,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,imrworldwide.com,no_dns
+686,easebar.com,no_handshake,,,,,,False,False,5005,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,easebar.com,no_dns
+687,inner-active.mobi,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,inner-active.mobi,no_443
+688,surveymonkey.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,retry,surveymonkey.com,
+689,mobile.de,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5005,,1,mobile.de,
+690,cambridge.org,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cambridge.org,tls12_or_older
+691,wswebcdn.com,no_handshake,,,,,,False,False,336,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,wswebcdn.com,no_dns
+692,xhamster.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,250,,1,xhamster.com,
+693,oneme.ru,no_handshake,,,,,,False,False,915,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,oneme.ru,no_dns
+694,bitrix24.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,1247,,retry,bitrix24.ru,
+695,uber.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,428,,1,uber.com,
+696,sharethrough.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,434,,1,sharethrough.com,
+697,kick.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,369,,1,kick.com,
+698,yelp.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,228,,retry,yelp.com,
+699,lemonde.fr,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,858,,1,lemonde.fr,
+700,cbsnews.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,741,,1,cbsnews.com,
+701,akamaitechnologies.com,no_handshake,,,,,,False,False,286,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamaitechnologies.com,no_dns
+702,sentinelone.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,false,false,739,,retry-2,www.sentinelone.net,
+703,gtm-a2b2.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gtm-a2b2.com,no_443
+704,bandcamp.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,385,,1,bandcamp.com,
+705,anydesk.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,307,,1,anydesk.com,
+706,palmplaystore.com,no_handshake,,,,,,False,False,683,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,palmplaystore.com,tls12_or_older
+707,fb.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,382,,1,fb.com,
+708,stripchat.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,312,,1,stripchat.com,
+709,samsungacr.com,no_handshake,,,,,,False,False,255,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,samsungacr.com,no_dns
+710,2gis.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,890,,retry,2gis.com,
+711,typekit.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,typekit.net,no_443
+712,fontawesome.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,415,,1,fontawesome.com,
+713,fda.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,385,,1,fda.gov,
+714,reverse.it,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,530,,1,reverse.it,
+715,zpath.net,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,zpath.net,no_dns
+716,shalltry.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,shalltry.com,
+717,amazon.es,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,613,,1,amazon.es,
+718,ovh.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1100,,1,ovh.net,
+719,binance.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,4369,,1,binance.com,
+720,bugsnag.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,bugsnag.com,
+721,pvp.net,no_handshake,,,,,,False,False,305,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,pvp.net,no_dns
+722,certcenter.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2917,,1,certcenter.com,
+723,itch.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,262,,1,itch.io,
+724,resolver.arpa,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,resolver.arpa,no_dns
+725,outbrain.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,471,,1,outbrain.com,
+726,hugedomains.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,292,,1,hugedomains.com,
+727,ya.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,745,,1,ya.ru,
+728,dailymail.co.uk,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1426,,1,dailymail.co.uk,
+729,rfc-editor.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,254,,1,rfc-editor.org,
+730,alipaydns.com,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,alipaydns.com,tls12_or_older
+731,deepl.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,80,,retry,deepl.com,
+732,cookielaw.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,69,,retry,cookielaw.org,
+733,ad-tech.ru,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ad-tech.ru,tls13_unstable
+734,pinimg.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,437,,1,pinimg.com,
+735,quantserve.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2142,,1,quantserve.com,
+736,gumgum.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,gumgum.com,
+737,shopeemobile.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,shopeemobile.com,no_443
+738,360.cn,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,360.cn,tls12_or_older
+739,enacdn.net,no_handshake,,,,,,False,False,244,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,enacdn.net,no_dns
+740,dnse0.com,no_handshake,,,,,,False,False,611,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dnse0.com,no_dns
+741,amazon.it,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,908,,1,amazon.it,
+742,rustore.ru,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,rustore.ru,tls12_or_older
+743,linode.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,285,,1,linode.com,
+744,asus.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,338,,1,asus.com,
+745,globalsign.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,194,,1,globalsign.com,
+746,googlezip.net,no_handshake,,,,,,False,False,286,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,googlezip.net,no_dns
+747,bidr.io,no_handshake,,,,,,False,False,244,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bidr.io,no_dns
+748,independent.co.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,191,,www,www.independent.co.uk,
+749,hihonorcloud.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,hihonorcloud.com,tls_error
+750,mediafire.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,279,,1,mediafire.com,
+751,supabase.co,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,360,,1,supabase.co,
+752,yahoodns.net,no_handshake,,,,,,False,False,503,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,yahoodns.net,no_dns
+753,cdn20.com,no_handshake,,,,,,False,False,487,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdn20.com,no_dns
+754,cnet.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,365,,1,cnet.com,
+755,creativecdn.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5005,,1,creativecdn.com,
+756,shopee.co.id,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,601,,1,shopee.co.id,
+757,python.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,2222,,1,python.org,
+758,craigslist.org,no_handshake,,,,,,False,False,2719,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,craigslist.org,tls12_or_older
+759,agkn.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10001,,www,www.agkn.com,
+760,nel.goog,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nel.goog,no_dns
+761,livejournal.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,4260,,1,livejournal.com,
+762,perplexity.ai,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,386,,1,perplexity.ai,
+763,bild.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,603,,1,bild.de,
+764,dbankcloud.com,no_handshake,,,,,,False,False,531,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dbankcloud.com,no_dns
+765,homedepot.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,212,,retry,homedepot.com,
+766,viber.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,684,,retry,viber.com,
+767,google.co.uk,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,467,,1,google.co.uk,
+768,1rx.io,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,1rx.io,no_dns
+769,mailchimp.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1457,,1,mailchimp.com,
+770,g.co,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,410,,1,g.co,
+771,spiegel.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,184,,retry,spiegel.de,
+772,safebrowsing.apple,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,safebrowsing.apple,no_dns
+773,wpguardian.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,299,,1,wpguardian.com,
+774,zoho.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,690,,retry,zoho.com,
+775,nikkei.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,922,,1,nikkei.com,
+776,wpguardian.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,360,,1,wpguardian.io,
+777,mlb.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,162,,retry,mlb.com,
+778,cdnhwc1.com,no_handshake,,,,,,False,False,789,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdnhwc1.com,no_dns
+779,ovscdns.com,no_handshake,,,,,,False,False,449,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ovscdns.com,no_dns
+780,tubi.io,no_handshake,,,,,,False,False,496,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tubi.io,no_dns
+781,wattpad.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,wattpad.com,
+782,criteo.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,criteo.net,no_dns
+783,bestbuy.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,378,,1,bestbuy.com,
+784,imgur.com,no_handshake,,,,,,False,False,549,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,imgur.com,tls12_or_older
+785,dv.tech,no_handshake,,,,,,False,False,307,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dv.tech,tls13_unstable
+786,uk.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2647,,1,uk.com,
+787,apnews.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,246,,1,apnews.com,
+788,shopee.com.br,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,930,,1,shopee.com.br,
+789,marriott.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1456,,1,marriott.com,
+790,mckinsey.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,471,,www,www.mckinsey.com,
+791,welt.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,10002,,www,www.welt.de,
+792,zillow.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,zillow.com,
+793,eeroup.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,eeroup.com,
+794,crwdcntrl.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,crwdcntrl.net,no_443
+795,sedo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,878,,1,sedo.com,
+796,nintendo.net,no_handshake,,,,,,False,False,408,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nintendo.net,no_dns
+797,steamstatic.com,no_handshake,,,,,,False,False,637,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,steamstatic.com,no_dns
+798,statuspage.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256,False,False,2972,,1,statuspage.io,
+799,rings.solutions,no_handshake,,,,,,False,False,493,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,rings.solutions,no_dns
+800,imgsmail.ru,no_handshake,,,,,,False,False,2616,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,imgsmail.ru,tls12_or_older
+801,ngenix.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2826,,1,ngenix.net,
+802,wb.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,P-256;P-384;P-521,False,False,1221,,retry,wb.ru,
+803,yieldmo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-384,False,False,3909,,1,yieldmo.com,
+804,lenovo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,615,,1,lenovo.com,
+805,moloco.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384,False,False,542,,1,moloco.com,
+806,my.com,no_handshake,,,,,,False,False,787,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,my.com,no_dns
+807,samsungosp.com,no_handshake,,,,,,False,False,116,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,samsungosp.com,no_dns
+808,ameblo.jp,no_handshake,,,,,,False,False,344,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ameblo.jp,no_dns
+809,prnewswire.com,no_handshake,,,,,,False,False,252,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,prnewswire.com,tls12_or_older
+810,discordapp.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,257,,1,discordapp.com,
+811,netlify.app,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256,False,False,1294,,1,netlify.app,
+812,recaptcha.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,841,,1,recaptcha.net,
+813,rakuten.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,699,,www,www.rakuten.com,
+814,wp.pl,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,1170,,retry,wp.pl,
+815,jamfcloud.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2459,,www,www.jamfcloud.com,
+816,adjust.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,344,,1,adjust.com,
+817,sc-cdn.net,no_handshake,,,,,,False,False,681,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,sc-cdn.net,no_dns
+818,liadm.com,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,liadm.com,no_dns
+819,33across.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1361,,1,33across.com,
+820,disneyplus.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,480,,1,disneyplus.com,
+821,fiverr.com,no_handshake,,,,,,False,False,254,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,fiverr.com,tls12_or_older
+822,fbsbx.com,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1258,,1,fbsbx.com,
+823,wcdnga.com,no_handshake,,,,,,False,False,427,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,wcdnga.com,no_dns
+824,erome.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,659,,1,erome.com,
+825,onlyfans.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,314,,1,onlyfans.com,
+826,auth0.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,500,,1,auth0.com,
+827,akamaitech.net,no_handshake,,,,,,False,False,491,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,akamaitech.net,no_dns
+828,people.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,410,,1,people.com,
+829,airbnb.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,741,,1,airbnb.com,
+830,agora.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.agora.io,
+831,ted.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,214,,www,www.ted.com,
+832,arcgis.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,arcgis.com,
+833,webempresa.eu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2934,,1,webempresa.eu,
+834,life360.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,83,,www,www.life360.com,
+835,a-mo.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,a-mo.net,
+836,mixpanel.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,350,,1,mixpanel.com,
+837,google.com.br,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,348,,1,google.com.br,
+838,zoom.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,92,,www,www.zoom.com,
+839,focus.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,492,,1,focus.de,
+840,usda.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,176,,www,www.usda.gov,
+841,teads.tv,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,227,,www,www.teads.tv,
+842,usps.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1187,,www,www.usps.com,
+843,incapdns.net,no_handshake,,,,,,False,False,584,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,incapdns.net,no_dns
+844,flipkart.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,474,,1,flipkart.com,
+845,parklogic.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384,False,False,600,,retry,parklogic.com,
+846,bytefcdn.com,no_handshake,,,,,,False,False,575,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,bytefcdn.com,no_dns
+847,azure-devices.net,no_handshake,,,,,,False,False,387,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,azure-devices.net,no_dns
+848,appspot.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,307,,1,appspot.com,
+849,px-cloud.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,293,,1,px-cloud.net,
+850,liftoff.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,253,,1,liftoff.io,
+851,ebay.de,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,708,,1,ebay.de,
+852,vivo.com.cn,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1199,,www,www.vivo.com.cn,
+853,seznam.cz,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256,False,False,839,,retry,seznam.cz,
+854,cloudsink.net,no_handshake,,,,,,False,False,528,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cloudsink.net,no_dns
+855,adform.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,669,,1,adform.net,
+856,nstld.com,no_handshake,,,,,,False,False,602,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nstld.com,no_dns
+857,discogs.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,10003,,www,www.discogs.com,
+858,academia.edu,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,academia.edu,
+859,digitaloceanspaces.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5001,,1,digitaloceanspaces.com,
+860,ozone.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1409,,1,ozone.ru,
+861,allegro.pl,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,1053,,1,allegro.pl,
+862,cloudinary.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5003,,1,cloudinary.com,
+863,privacy-mgmt.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,privacy-mgmt.com,no_dns
+864,chess.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,226,,1,chess.com,
+865,theverge.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,182,,retry,theverge.com,
+866,daum.net,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,575,,retry,daum.net,
+867,pendo.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,190,,retry,pendo.io,
+868,deloitte.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,74,,www,www.deloitte.com,
+869,turn.com,no_handshake,,,,,,False,False,296,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,turn.com,no_dns
+870,www.gov.br,ok,TLSv1.3,TLS_CHACHA20_POLY1305_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,4439,,1,www.gov.br,
+871,frontiersin.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,547,,1,frontiersin.org,
+872,me.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,679,,1,me.com,
+873,amazon.com.br,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,677,,retry,amazon.com.br,
+874,t-s1-msedge.net,no_handshake,,,,,,False,False,243,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,t-s1-msedge.net,no_dns
+875,unpkg.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,205,,1,unpkg.com,
+876,xvideos.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,565,,1,xvideos.com,
+877,service-now.com,no_handshake,,,,,,False,False,5004,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,service-now.com,tls12_or_older
+878,agoda.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,948,,1,agoda.com,
+879,kunluncan.com,no_handshake,,,,,,False,False,5002,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,kunluncan.com,no_443
+880,pexels.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,302,,1,pexels.com,
+881,myspace.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,5003,,1,myspace.com,
+882,ebay.co.uk,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,460,,1,ebay.co.uk,
+883,biblegateway.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,biblegateway.com,
+884,everesttech.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,everesttech.net,no_443
+885,cursor.sh,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,290,,1,cursor.sh,
+886,adgrx.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,false,false,2510,,retry-2,www.adgrx.com,
+887,vivoglobal.com,no_handshake,,,,,,False,False,658,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vivoglobal.com,tls12_or_older
+888,ssl-images-amazon.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ssl-images-amazon.com,no_dns
+889,kleinanzeigen.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,171,,retry,kleinanzeigen.de,
+890,onetag-sys.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256,False,False,200,,retry,onetag-sys.com,
+891,cdnhwc2.com,no_handshake,,,,,,False,False,728,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdnhwc2.com,no_dns
+892,porkbun.com,no_handshake,,,,,,False,False,1759,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,porkbun.com,tls12_or_older
+893,readthedocs.io,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,303,,1,readthedocs.io,
+894,unrulymedia.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,unrulymedia.com,
+895,yellowblue.io,no_handshake,,,,,,False,False,342,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,yellowblue.io,no_dns
+896,worldbank.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,306,,1,worldbank.org,
+897,poki.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,232,,1,poki.com,
+898,nbcnews.com,no_handshake,,,,,,False,False,1308,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,nbcnews.com,tls12_or_older
+899,sknt.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2684,,1,sknt.ru,
+900,pikabu.ru,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2829,,1,pikabu.ru,
+901,vtwenty.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,vtwenty.com,no_dns
+902,appcenter.ms,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha384WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768,True,True,531,,1,appcenter.ms,
+903,mercadolivre.com.br,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,651,,1,mercadolivre.com.br,
+904,bankofamerica.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,bankofamerica.com,
+905,visa.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,6265,,www,www.visa.cn,
+906,dnse2.com,no_handshake,,,,,,False,False,358,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,dnse2.com,no_dns
+907,epa.gov,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,908,,1,epa.gov,
+908,pornhub.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521,False,False,653,,1,pornhub.com,
+909,hbr.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,hbr.org,
+910,spamhaus.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,618,,1,spamhaus.org,
+911,otto.de,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,520,,1,otto.de,
+912,smilewanted.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,351,,1,smilewanted.com,
+913,figma.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,figma.com,
+914,fwmrm.net,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1076,,1,fwmrm.net,
+915,no-ip.com,no_handshake,,,,,,False,False,805,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,no-ip.com,tls12_or_older
+916,princeton.edu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,5167,,www,www.princeton.edu,
+917,lg.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,1191,,www,www.lg.com,
+918,allaboutcookies.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,667,,1,allaboutcookies.org,
+919,synology.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10002,,www,www.synology.com,
+920,manutouch.com.cn,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,false,false,15002,,retry-2,manutouch.com.cn,
+921,wyzecam.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,653,,1,wyzecam.com,
+922,disqus.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,1497,,1,disqus.com,
+923,latimes.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768;SecP256r1MLKEM768;SecP384r1MLKEM1024,True,True,830,,1,latimes.com,
+924,instructure.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,176,,retry,instructure.com,
+925,msftauth.net,no_handshake,,,,,,False,False,492,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,msftauth.net,no_dns
+926,ddns.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ddns.net,no_443
+927,contentsquare.net,no_handshake,,,,,,False,False,549,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,contentsquare.net,no_dns
+928,coupang.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,coupang.com,
+929,classlink.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,747,,1,classlink.com,
+930,qualtrics.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,913,,1,qualtrics.com,
+931,networkadvertising.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,networkadvertising.org,
+932,tailscale.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,777,,1,tailscale.com,
+933,seedtag.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,237,,1,seedtag.com,
+934,mayoclinic.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,2234,,www,www.mayoclinic.org,
+935,patreon.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,68,,retry,patreon.com,
+936,note.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5002,,1,note.com,
+937,nexusmods.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,186,,1,nexusmods.com,
+938,bund.de,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,987,,1,bund.de,
+939,volcgslb.com,no_handshake,,,,,,False,False,409,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,volcgslb.com,no_dns
+940,repubblica.it,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,repubblica.it,
+941,amazonalexa.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,531,,1,amazonalexa.com,
+942,state.gov,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,875,,1,state.gov,
+943,flashtalking.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,883,,1,flashtalking.com,
+944,gpcloudservice.com,no_handshake,,,,,,False,False,141,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,gpcloudservice.com,no_dns
+945,cootlogix.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,298,,1,cootlogix.com,
+946,genius.com,no_handshake,,,,,,False,False,147,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,genius.com,tls12_or_older
+947,ahacdn.me,no_handshake,,,,,,False,False,1244,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,ahacdn.me,tls12_or_older
+948,eu-1-id5-sync.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,300,,1,eu-1-id5-sync.com,
+949,youku.com,no_handshake,,,,,,False,False,1828,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,youku.com,tls12_or_older
+950,character.ai,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,288,,1,character.ai,
+951,consultant.ru,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2287,,1,consultant.ru,
+952,tiktokw.us,no_handshake,,,,,,False,False,491,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,tiktokw.us,no_dns
+953,odoo.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,612,,1,odoo.com,
+954,company-target.com,no_handshake,,,,,,False,False,245,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,company-target.com,tls13_unstable
+955,leiniao.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,4351,,www,www.leiniao.com,
+956,amazon.com.au,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2329,,1,amazon.com.au,
+957,chaturbate.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,338,,1,chaturbate.com,
+958,corriere.it,no_handshake,,,,,,False,False,1406,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,corriere.it,tls12_or_older
+959,ancestry.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,373,,1,ancestry.com,
+960,onet.pl,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,ecdsa_secp256r1_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,onet.pl,
+961,max.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,max.com,
+962,jetbrains.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5004,,1,jetbrains.com,
+963,xiaohongshu.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,610,,1,xiaohongshu.com,
+964,docker.io,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,814,,1,docker.io,
+965,mercadolibre.com.ar,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,626,,1,mercadolibre.com.ar,
+966,go-mpulse.net,no_handshake,,,,,,False,False,248,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,go-mpulse.net,no_dns
+967,eporner.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,619,,1,eporner.com,
+968,washington.edu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,1022,,1,washington.edu,
+969,attn.tv,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,1219,,www,www.attn.tv,
+970,huffpost.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,214,,1,huffpost.com,
+971,buydomains.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,331,,1,buydomains.com,
+972,curseforge.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,91,,retry,curseforge.com,
+973,hm.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;X25519MLKEM768,True,True,5003,,1,hm.com,
+974,lowes.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,399,,1,lowes.com,
+975,app-ads-services.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;X25519MLKEM768,True,True,209,,retry,app-ads-services.com,
+976,change.org,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,change.org,
+977,pbs.org,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA384,ecdsa_secp384r1_sha384,X25519;P-256;P-384;P-521,False,False,853,,1,pbs.org,
+978,deepseek.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,10001,,retry,deepseek.com,
+979,mailchi.mp,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;X25519MLKEM768,True,True,2306,,1,mailchi.mp,
+980,xhamster46.desi,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,281,,1,xhamster46.desi,
+981,opera-api.com,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,opera-api.com,no_443
+982,xnxx.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,632,,1,xnxx.com,
+983,caixa.gov.br,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,P-256;P-384;P-521,False,False,929,,retry,caixa.gov.br,
+984,a-msedge.net,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,a-msedge.net,no_dns
+985,jd.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,4440,,1,jd.com,
+986,cdn-vk.ru,no_handshake,,,,,,False,False,5003,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,cdn-vk.ru,no_dns
+987,btloader.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,204,,1,btloader.com,
+988,4dex.io,no_handshake,,,,,,False,False,292,"no KEM handshake succeeded (unreachable, no TLS, or timeout)",1,4dex.io,no_dns
+989,hostgator.com.br,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,216,,1,hostgator.com.br,
+990,trendyol.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,286,,1,trendyol.com,
+991,umich.edu,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,467,,1,umich.edu,
+992,amemv.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384,False,False,3953,,1,amemv.com,
+993,sofascore.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,438,,1,sofascore.com,
+994,ys7.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,2117,,retry,ys7.com,
+995,flightradar24.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,ecdsa-with-SHA256,ecdsa_secp256r1_sha256,X25519;P-256;P-384;P-521;X25519MLKEM768,True,True,282,,1,flightradar24.com,
+996,costco.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,510,,1,costco.com,
+997,n-tv.de,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,n-tv.de,
+998,clever.com,ok,TLSv1.3,TLS_AES_128_GCM_SHA256,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768;SecP256r1MLKEM768,True,True,5003,,1,clever.com,
+999,amazon.co.za,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;P-521,False,False,774,,1,amazon.co.za,
+1000,flashscore.com,ok,TLSv1.3,TLS_AES_256_GCM_SHA384,sha256WithRSAEncryption,rsa_pss_rsae_sha256,X25519;P-256;P-384;X25519MLKEM768,True,True,928,,1,flashscore.com,

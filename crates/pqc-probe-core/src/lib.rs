@@ -1,15 +1,22 @@
 //! pqc-probe-core — core probe logic for detecting post-quantum algorithms
 //! on TLS and SSH endpoints.
 //!
-//! Week 1 scope: TLS probing by shelling out to `openssl s_client`, vanilla
-//! mode only. Experimental mode (with oqs-provider) and SSH probing arrive
-//! in Weeks 2 and 3.
+//! TLS probing shells out to `openssl s_client` (one handshake per candidate
+//! group, run in parallel); dual mode diffs vanilla OpenSSL against
+//! OpenSSL + oqs-provider. SSH probing lives in [`ssh`].
+
+pub mod ssh;
+
+// Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
+pub use ssh::{
+    probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
+};
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::process::Command;
-use std::collections::HashSet;
 
 /// A TLS or SSH target.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,8 +50,7 @@ impl Target {
 pub enum ProbeMode {
     /// Vanilla OpenSSL — what a stock TLS client sees today.
     Vanilla,
-    /// OpenSSL + oqs-provider — the extended codepoint set. Week 2.
-    #[allow(dead_code)]
+    /// OpenSSL + oqs-provider — the extended codepoint set.
     Experimental,
 }
 
@@ -188,11 +194,11 @@ async fn try_kem(
     kem: &str,
 ) -> Result<KemAttempt, ProbeError> {
     let address = format!("{}:{}", target.host, target.port);
-    let output = tokio::time::timeout(
-        opts.timeout,
-        Command::new(&opts.openssl_path)
-            .args([
+    let (stdout, stderr) = run_s_client(
+        &opts.openssl_path,
+        &[
                 "s_client",
+                "-4", // force IPv4: broken-IPv6 networks stall ~5s before fallback
                 "-connect",
                 &address,
                 "-tls1_3",
@@ -200,26 +206,20 @@ async fn try_kem(
                 kem,
                 "-servername",
                 &target.host,
-            ])
-            .stdin(std::process::Stdio::null())
-            .output(),
+            ],
+        opts.timeout,
     )
-    .await
-    .map_err(|_| ProbeError::Timeout)??;
- 
-    let combined = format!(
-        "{}\n{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
- 
+    .await?;
+
+    let combined = format!("{}\n{}", stdout, stderr);
+
     // Protocol — same label, tolerate 0, 1, 2 or more spaces before the colon.
     let protocol_version = extract_kv(&combined, "Protocol");
- 
+
     // Cipher — 3.0.x has "Cipher    : X", 3.5.x has "New, TLSv1.3, Cipher is X".
     let cipher_raw = extract_kv(&combined, "Cipher")
         .or_else(|| extract_after(&combined, "Cipher is "));
- 
+
     // Negotiated group — 3.0.x "Server Temp Key:", 3.5.x "Negotiated TLS1.3 group:".
     let server_temp_raw = extract_kv(&combined, "Server Temp Key")
         .or_else(|| extract_kv(&combined, "Peer Temp Key"))
@@ -227,10 +227,10 @@ async fn try_kem(
         .or_else(|| extract_kv(&combined, "Negotiated TLS1.3 group"))
         .or_else(|| extract_kv(&combined, "Negotiated TLS 1.3 group"))
         .filter(|s| s != "<NULL>" && !s.is_empty());
- 
+
     let peer_sig_alg = extract_kv(&combined, "Peer signature type")
         .or_else(|| extract_kv(&combined, "Peer signing digest"));
- 
+
     // Handshake succeeded iff we got a real cipher and a TLS 1.3 protocol line.
     let handshake_succeeded = cipher_raw
         .as_deref()
@@ -240,15 +240,15 @@ async fn try_kem(
             .as_deref()
             .map(|p| p.starts_with("TLSv1.3") || p.starts_with("TLS 1.3"))
             .unwrap_or(false);
- 
+
     let negotiated = server_temp_raw.as_deref().and_then(normalize_group);
     let cipher = cipher_raw.filter(|c| !c.contains("(NONE)"));
- 
+
     // Prefer cert chain's `sigalg:` (clean, 3.5.x emits it on every chain line);
     // fall back to body-of-cert "Signature Algorithm:" line (3.0.x behavior).
     let cert_sig_alg =
         extract_chain_sigalg(&combined).or_else(|| extract_cert_sig_alg(&combined));
- 
+
     Ok(KemAttempt {
         offered: kem.to_string(),
         negotiated,
@@ -259,7 +259,7 @@ async fn try_kem(
         peer_sig_alg,
     })
 }
- 
+
 /// Extract value from a "Key: Value" line, tolerating any whitespace around the colon.
 fn extract_kv(text: &str, key: &str) -> Option<String> {
     text.lines().find_map(|line| {
@@ -277,7 +277,7 @@ fn extract_kv(text: &str, key: &str) -> Option<String> {
         }
     })
 }
- 
+
 /// Extract the token immediately after a marker string, trimmed, up to end of line.
 /// Used for openssl 3.5.x's "New, TLSv1.3, Cipher is <X>" format.
 fn extract_after(text: &str, marker: &str) -> Option<String> {
@@ -287,7 +287,7 @@ fn extract_after(text: &str, marker: &str) -> Option<String> {
             .filter(|s| !s.is_empty())
     })
 }
- 
+
 /// Pull sigalg from cert chain `a:...sigalg: X` lines (openssl 3.5.x).
 /// The sigalg may be followed by other info; stop at semicolon.
 fn extract_chain_sigalg(text: &str) -> Option<String> {
@@ -301,7 +301,7 @@ fn extract_chain_sigalg(text: &str) -> Option<String> {
             .filter(|s| !s.is_empty())
     })
 }
- 
+
 /// Fallback: pull from "Signature Algorithm:" line in cert body (openssl 3.0.x).
 fn extract_cert_sig_alg(text: &str) -> Option<String> {
     text.lines().find_map(|line| {
@@ -311,7 +311,7 @@ fn extract_cert_sig_alg(text: &str) -> Option<String> {
             .filter(|s| !s.is_empty())
     })
 }
- 
+
 /// Normalize openssl's negotiated-group reporting to a clean algorithm name.
 ///
 /// Examples:
@@ -328,49 +328,49 @@ fn normalize_group(raw: &str) -> Option<String> {
     if parts.is_empty() || parts[0].is_empty() {
         return None;
     }
- 
+
     let name = if parts[0].eq_ignore_ascii_case("ECDH") && parts.len() >= 2 {
         parts[1]
     } else {
         parts[0]
     };
- 
+
     let normalized = match name {
         "prime256v1" | "secp256r1" => "P-256",
         "secp384r1" => "P-384",
         "secp521r1" => "P-521",
         other => other,
     };
- 
+
     Some(normalized.to_string())
 }
- 
+
 #[cfg(test)]
 mod tests {
     use super::*;
- 
+
     #[test]
     fn parse_target_works() {
         let t = Target::parse("example.com:443").unwrap();
         assert_eq!(t.host, "example.com");
         assert_eq!(t.port, 443);
     }
- 
+
     #[test]
     fn parse_target_rejects_bad_input() {
         assert!(Target::parse("example.com").is_err());
         assert!(Target::parse("example.com:notaport").is_err());
     }
- 
+
     // --- 3.0.x format regression ---
- 
+
     const OSSL_30X_SAMPLE: &str = "\
     Protocol  : TLSv1.3\n\
     Cipher    : TLS_AES_256_GCM_SHA384\n\
     Server Temp Key: X25519, 253 bits\n\
     Peer signature type: ecdsa_secp256r1_sha256\n\
     ";
- 
+
     #[test]
     fn parses_3_0_x_format() {
         assert_eq!(
@@ -390,9 +390,9 @@ mod tests {
             Some("ecdsa_secp256r1_sha256".to_string())
         );
     }
- 
+
     // --- 3.5.x format ---
- 
+
     const OSSL_35X_SAMPLE: &str = "\
     Peer signing digest: SHA256\n\
     Peer signature type: ecdsa_secp256r1_sha256\n\
@@ -402,7 +402,7 @@ mod tests {
     Protocol: TLSv1.3\n\
        a:PKEY: EC, (prime256v1); sigalg: ecdsa-with-SHA256\n\
     ";
- 
+
     #[test]
     fn parses_3_5_x_format() {
         assert_eq!(
@@ -428,9 +428,9 @@ mod tests {
             Some("ecdsa-with-SHA256".to_string())
         );
     }
- 
+
     // --- normalize_group ---
- 
+
     #[test]
     fn normalize_group_cases() {
         assert_eq!(normalize_group("X25519, 253 bits"), Some("X25519".to_string()));
@@ -464,10 +464,9 @@ mod tests {
     fn normalize_group_rejects_null_sentinel(){
         assert_eq!(normalize_group("<NULL>"), None);
     }
-}// Append to pqc-probe-core/src/lib.rs. These items extend the Week 1 code; no deletions.
-// Add `openssl_oqs_path: Option<String>` to ProbeOptions by patching the existing struct;
-// everything else is additive.
+}
 
+// ---------- Dual-mode probing (vanilla vs oqs-provider) ----------
 
 /// Report that combines two probes of the same target: one via vanilla OpenSSL,
 /// one via OpenSSL with oqs-provider loaded. The diff between the two is the
@@ -606,13 +605,76 @@ mod dual_tests {
         assert_eq!(d.only_vanilla, vec!["X25519"]);
     }
 }
-// Add to pqc-probe-core/src/lib.rs. Two changes:
-//   1. Add `pub mod ssh;` near the top (after other module declarations if any).
-//   2. Re-export the SSH types at the crate root for convenient access.
 
-pub mod ssh;
+// ---------- s_client runner ----------
 
-// Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
-pub use ssh::{
-    probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
-};
+/// Marker printed at the end of s_client's post-handshake summary (3.0.x and 3.5.x).
+/// Every field the parser needs (chain, peer sig, group, cipher, protocol) comes before it.
+const SCLIENT_DONE_MARKER: &[u8] = b"Verify return code:";
+
+/// Run `openssl s_client` and return (stdout, stderr) as soon as the handshake summary
+/// has been printed, instead of waiting for the process to exit. After a successful
+/// TLS 1.3 handshake s_client can linger for seconds waiting on the server to close;
+/// we don't need that, so we kill it. On timeout, whatever was captured is returned
+/// (the parser decides whether a handshake happened); only an empty capture is a
+/// `Timeout` error. The child is always killed and reaped — no orphans.
+async fn run_s_client(
+    openssl: &str,
+    args: &[&str],
+    timeout: Duration,
+) -> Result<(String, String), ProbeError> {
+    use tokio::io::AsyncReadExt;
+
+    let mut child = Command::new(openssl)
+        .args(args)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()?;
+
+    let mut stdout = child.stdout.take().expect("stdout piped");
+    let mut stderr = child.stderr.take().expect("stderr piped");
+    let stderr_task = tokio::spawn(async move {
+        let mut buf = Vec::new();
+        let _ = stderr.read_to_end(&mut buf).await;
+        buf
+    });
+
+    let mut out = Vec::new();
+    let read_until_done = async {
+        let mut chunk = [0u8; 8192];
+        loop {
+            match stdout.read(&mut chunk).await {
+                Ok(0) | Err(_) => break, // process exited / pipe closed
+                Ok(n) => {
+                    out.extend_from_slice(&chunk[..n]);
+                    if out
+                        .windows(SCLIENT_DONE_MARKER.len())
+                        .any(|w| w == SCLIENT_DONE_MARKER)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    };
+    let timed_out = tokio::time::timeout(timeout, read_until_done).await.is_err();
+
+    let _ = child.start_kill();
+    let _ = child.wait().await;
+
+    let err = tokio::time::timeout(Duration::from_millis(500), stderr_task)
+        .await
+        .ok()
+        .and_then(|r| r.ok())
+        .unwrap_or_default();
+
+    if timed_out && out.is_empty() {
+        return Err(ProbeError::Timeout);
+    }
+    Ok((
+        String::from_utf8_lossy(&out).into_owned(),
+        String::from_utf8_lossy(&err).into_owned(),
+    ))
+}

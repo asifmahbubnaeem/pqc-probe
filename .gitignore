@@ -18,10 +18,17 @@ Thumbs.db
 .env.local
 
 # Scratch probe outputs
-/results/
+
 /scratch/
 *.log
 
 # Local notes you don't want pushed
 NOTES.md
 TODO.local.md
+.venv/
+
+# scan intermediates — only the final dataset is published
+results/*
+!results/README.md
+!results/*-final.csv
+!results/*-final-charts.png

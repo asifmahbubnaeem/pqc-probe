@@ -1,6 +1,6 @@
 // Replace crates/pqc-probe-cli/src/main.rs with this.
 // Adds --protocol flag (tls | ssh | both), SSH probing, SSH dual-mode diff output.
-
+mod scan;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use pqc_probe_core::{
@@ -36,6 +36,22 @@ enum Command {
         #[arg(long, default_value_t = 10)]
         timeout: u64,
     },
+
+    /// Batch-scan a CSV of domains, write results to another CSV.
+    /// Input CSV: no header; two columns (rank, domain). Tranco format.
+    Scan {
+        /// Input CSV file.
+        input: std::path::PathBuf,
+        /// Output CSV file (append-mode, resumable).
+        #[arg(long, default_value = "scan-results.csv")]
+        output: std::path::PathBuf,
+        /// Concurrent probes.
+        #[arg(long, default_value_t = 50)]
+        concurrency: usize,
+        /// Per-probe timeout in seconds.
+        #[arg(long, default_value_t = 5)]
+        timeout: u64,
+    },
 }
 
 #[derive(Clone, Copy, ValueEnum, PartialEq)]
@@ -67,6 +83,10 @@ async fn main() -> Result<()> {
 
     let cli = Cli::parse();
     match cli.command {
+        Command::Scan { input, output, concurrency, timeout } => {
+            let openssl = std::env::var("PQC_PROBE_OPENSSL").unwrap_or_else(|_| "openssl".into());
+            scan::run_scan(&input, &output, concurrency, timeout, openssl).await
+        }
         Command::Probe {
             target,
             mode,
