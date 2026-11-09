@@ -6,10 +6,15 @@
 //! OpenSSL + oqs-provider. SSH probing lives in [`ssh`].
 
 pub mod policy;
+pub mod report;
 pub mod ssh;
 
 // Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
 pub use policy::{check_resolved, prepare_target, Policy, PolicyError};
+pub use report::{
+    ModeSelection, ProtocolSelection, Report, ReportTarget, RequestInfo, SshClientResult,
+    SshSection, TlsSection, SCHEMA_VERSION,
+};
 pub use ssh::{
     annotate_mainline, mainline_kex_since, parse_openssh_version, probe_ssh, probe_ssh_dual,
     DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
@@ -103,7 +108,7 @@ pub struct ProbeReport {
 }
 
 /// TLS-side findings.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct TlsReport {
     pub protocol_version: Option<String>,
     pub cipher: Option<String>,
@@ -122,7 +127,7 @@ pub struct TlsReport {
     pub openssl_version: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct KemResult {
     pub offered: String,
     pub negotiated: Option<String>,
@@ -308,7 +313,7 @@ async fn try_kem(
 }
 
 /// One certificate in the server's chain, as reported by `openssl s_client`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct CertInfo {
     /// 0 = leaf; higher numbers are closer to the root.
     pub depth: u8,
@@ -746,7 +751,7 @@ pub struct DualProbeReport {
 }
 
 /// Diff summary across the two probes' negotiated KEM sets.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct KemDiff {
     /// KEMs that negotiated in vanilla but not in experimental.
     pub only_vanilla: Vec<String>,

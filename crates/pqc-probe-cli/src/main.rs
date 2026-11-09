@@ -4,8 +4,9 @@ mod scan;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 use pqc_probe_core::{
-    probe, probe_dual, probe_ssh, probe_ssh_dual, DualProbeReport, DualSshReport, ProbeMode,
-    ProbeOptions, ProbeReport, SshProbeOptions, SshReport, Target,
+    probe, probe_dual, probe_ssh, probe_ssh_dual, DualProbeReport, DualSshReport, ModeSelection,
+    ProbeMode, ProbeOptions, ProbeReport, ProtocolSelection, Report, ReportTarget, RequestInfo,
+    SshProbeOptions, SshReport, SshSection, Target, TlsSection,
 };
 use std::time::Duration;
 use tracing_subscriber::EnvFilter;
@@ -274,15 +275,37 @@ async fn run_probe(
     // ========== Render ==========
     match output {
         Output::Json => {
-            // Combine into one JSON object with optional fields.
-            let json = serde_json::json!({
-                "target": target_str,
-                "tls_single": tls_single,
-                "tls_dual": tls_dual,
-                "ssh_single": ssh_single,
-                "ssh_dual": ssh_dual,
-            });
-            println!("{}", serde_json::to_string_pretty(&json)?);
+            let tls_section = match (&tls_dual, &tls_single) {
+                (Some(d), _) => Some(TlsSection::from_dual(d.clone())),
+                (None, Some(r)) => Some(TlsSection::from_single(
+                    mode == Mode::Experimental,
+                    r.clone(),
+                )),
+                (None, None) => None,
+            };
+            let ssh_section = match (&ssh_dual, &ssh_single) {
+                (Some(d), _) => Some(SshSection::from_dual(d.clone())),
+                (None, Some(r)) => Some(SshSection::from_single(
+                    mode == Mode::Experimental,
+                    r.clone(),
+                )),
+                (None, None) => None,
+            };
+            let report = Report::new(
+                ReportTarget {
+                    input: target_str.clone(),
+                    host: target.host.clone(),
+                    tls_port: want_tls.then_some(tls_target.port),
+                    ssh_port: want_ssh.then_some(ssh_target.port),
+                },
+                RequestInfo {
+                    protocol: protocol_selection(protocol),
+                    mode: mode_selection(mode),
+                },
+            )
+            .with_tls(tls_section)
+            .with_ssh(ssh_section);
+            println!("{}", serde_json::to_string_pretty(&report)?);
         }
         Output::Human => {
             println!("Target: {}", target_str);
@@ -668,6 +691,22 @@ fn negotiated_set_tls(tls: &pqc_probe_core::TlsReport) -> std::collections::Hash
         .collect()
 }
 
+fn protocol_selection(p: Protocol) -> ProtocolSelection {
+    match p {
+        Protocol::Tls => ProtocolSelection::Tls,
+        Protocol::Ssh => ProtocolSelection::Ssh,
+        Protocol::Both => ProtocolSelection::Both,
+    }
+}
+
+fn mode_selection(m: Mode) -> ModeSelection {
+    match m {
+        Mode::Vanilla => ModeSelection::Vanilla,
+        Mode::Experimental => ModeSelection::Experimental,
+        Mode::Both => ModeSelection::Both,
+    }
+}
+
 /// Protocol-extension pseudo-algorithms that shouldn't be counted as KEX methods.
 /// Hidden from human output; kept in the raw JSON for completeness.
 fn is_ssh_protocol_marker(name: &str) -> bool {
@@ -677,6 +716,19 @@ fn is_ssh_protocol_marker(name: &str) -> bool {
 #[cfg(test)]
 mod cli_tests {
     use super::*;
+
+    #[test]
+    fn cli_choices_map_to_report_enums() {
+        assert_eq!(protocol_selection(Protocol::Tls), ProtocolSelection::Tls);
+        assert_eq!(protocol_selection(Protocol::Ssh), ProtocolSelection::Ssh);
+        assert_eq!(protocol_selection(Protocol::Both), ProtocolSelection::Both);
+        assert_eq!(mode_selection(Mode::Vanilla), ModeSelection::Vanilla);
+        assert_eq!(
+            mode_selection(Mode::Experimental),
+            ModeSelection::Experimental
+        );
+        assert_eq!(mode_selection(Mode::Both), ModeSelection::Both);
+    }
 
     #[test]
     fn marker_detection() {

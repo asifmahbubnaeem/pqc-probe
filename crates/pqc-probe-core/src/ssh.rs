@@ -65,7 +65,7 @@ pub struct DualSshReport {
     pub experimental_error: Option<String>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct SshKexDiff {
     /// KEX algorithms both clients can negotiate.
     pub in_both: Vec<String>,

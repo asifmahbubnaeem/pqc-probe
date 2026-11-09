@@ -59,7 +59,7 @@ TLS:
     SecP256r1MLKEM768         -                         fail
 ```
 
-JSON output: `pqc-probe probe google.com:443 --output json`.
+JSON output: `pqc-probe probe google.com:443 --output json` (schema and compatibility rules: [docs/json-schema.md](docs/json-schema.md)).
 
 Override the openssl binary: `PQC_PROBE_OPENSSL=/opt/openssl-3.5/bin/openssl pqc-probe probe ...`.
 

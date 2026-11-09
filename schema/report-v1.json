@@ -1,0 +1,536 @@
+{
+  "$defs": {
+    "CertInfo": {
+      "description": "One certificate in the server's chain, as reported by `openssl s_client`.",
+      "properties": {
+        "depth": {
+          "description": "0 = leaf; higher numbers are closer to the root.",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "not_after": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "not_before": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "post_quantum": {
+          "description": "The signature algorithm or the key type is post-quantum.",
+          "type": "boolean"
+        },
+        "public_key_bits": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "public_key_type": {
+          "description": "Key type as openssl prints it, e.g. \"id-ecPublicKey\", \"rsaEncryption\", \"ML-DSA-65\".",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "self_signed": {
+          "description": "subject == issuer, i.e. a real root. Servers usually don't send the root, so the\nlast cert in the chain is typically *not* self-signed.",
+          "type": "boolean"
+        },
+        "signature_algorithm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subject": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "depth",
+        "issuer",
+        "not_after",
+        "not_before",
+        "post_quantum",
+        "public_key_bits",
+        "public_key_type",
+        "self_signed",
+        "signature_algorithm",
+        "subject"
+      ],
+      "type": "object"
+    },
+    "KemDiff": {
+      "description": "Diff summary across the two probes' negotiated KEM sets.",
+      "properties": {
+        "in_both": {
+          "description": "KEMs that negotiated in both.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "only_experimental": {
+          "description": "KEMs that negotiated in experimental but not in vanilla — the interesting case.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "only_vanilla": {
+          "description": "KEMs that negotiated in vanilla but not in experimental.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "in_both",
+        "only_experimental",
+        "only_vanilla"
+      ],
+      "type": "object"
+    },
+    "KemResult": {
+      "properties": {
+        "handshake_succeeded": {
+          "type": "boolean"
+        },
+        "negotiated": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "offered": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "handshake_succeeded",
+        "negotiated",
+        "offered"
+      ],
+      "type": "object"
+    },
+    "ModeSelection": {
+      "description": "Which client stack(s) were requested: the stock one, the experimental PQ one, or both (diffed).",
+      "enum": [
+        "vanilla",
+        "experimental",
+        "both"
+      ],
+      "type": "string"
+    },
+    "ProtocolSelection": {
+      "description": "Which protocol(s) were requested.",
+      "enum": [
+        "tls",
+        "ssh",
+        "both"
+      ],
+      "type": "string"
+    },
+    "ReportTarget": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "input": {
+          "description": "The target exactly as the user gave it.",
+          "type": "string"
+        },
+        "ssh_port": {
+          "description": "SSH port probed; null when SSH was not requested.",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "tls_port": {
+          "description": "TLS port probed; null when TLS was not requested.",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "host",
+        "input",
+        "ssh_port",
+        "tls_port"
+      ],
+      "type": "object"
+    },
+    "RequestInfo": {
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/ModeSelection"
+        },
+        "protocol": {
+          "$ref": "#/$defs/ProtocolSelection"
+        }
+      },
+      "required": [
+        "mode",
+        "protocol"
+      ],
+      "type": "object"
+    },
+    "SideErrors": {
+      "description": "Why a side produced no result, when it didn't.",
+      "properties": {
+        "experimental": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vanilla": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "experimental",
+        "vanilla"
+      ],
+      "type": "object"
+    },
+    "SshClientResult": {
+      "description": "What one ssh client saw.",
+      "properties": {
+        "client_can_negotiate": {
+          "description": "The subset of the server's offer that this client negotiated successfully.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "client_version": {
+          "description": "First line of this client's `ssh -V`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "server_offered_kex": {
+          "description": "Every KEX algorithm the server offered, including protocol markers such as `kex-strict-*`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "server_version": {
+          "description": "The server's software version string (some servers, e.g. GitHub, randomize it).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "client_can_negotiate",
+        "client_version",
+        "server_offered_kex",
+        "server_version"
+      ],
+      "type": "object"
+    },
+    "SshKexDiff": {
+      "properties": {
+        "in_both": {
+          "description": "KEX algorithms both clients can negotiate.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mainline_since": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "For `only_experimental` entries that stock OpenSSH also has in some release:\nalgorithm -> first mainline version (\"9.9\"). Entries absent here are truly OQS-only.",
+          "type": "object"
+        },
+        "only_experimental": {
+          "description": "KEX algorithms only the OQS client can negotiate (the interesting case).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "only_vanilla": {
+          "description": "KEX algorithms only the vanilla client can negotiate (rare but possible).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "in_both",
+        "mainline_since",
+        "only_experimental",
+        "only_vanilla"
+      ],
+      "type": "object"
+    },
+    "SshSection": {
+      "description": "SSH results per client.",
+      "properties": {
+        "diff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SshKexDiff"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Difference between the two; null unless both sides produced a result."
+        },
+        "errors": {
+          "$ref": "#/$defs/SideErrors"
+        },
+        "experimental": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SshClientResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Result with the experimental PQ client; null if not requested or failed."
+        },
+        "vanilla": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SshClientResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Result with the stock ssh client; null if not requested or failed (see `errors`)."
+        }
+      },
+      "required": [
+        "diff",
+        "errors",
+        "experimental",
+        "vanilla"
+      ],
+      "type": "object"
+    },
+    "TlsReport": {
+      "description": "TLS-side findings.",
+      "properties": {
+        "cert_chain": {
+          "default": [],
+          "description": "Certificate chain as sent by the server (depth 0 = leaf). Empty if none was parsed.",
+          "items": {
+            "$ref": "#/$defs/CertInfo"
+          },
+          "type": "array"
+        },
+        "cert_sig_alg": {
+          "description": "Signature algorithm on the server's certificate.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cipher": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kems_tried": {
+          "description": "Which KEMs the server negotiated when offered. Each entry is \"offered → negotiated\".",
+          "items": {
+            "$ref": "#/$defs/KemResult"
+          },
+          "type": "array"
+        },
+        "openssl_version": {
+          "default": null,
+          "description": "First line of `<openssl> version` for the client binary used, e.g.\n\"OpenSSL 3.5.2 5 Aug 2025 (Library: OpenSSL 3.5.2 5 Aug 2025)\".",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "peer_sig_alg": {
+          "description": "Signature algorithm used in CertificateVerify (what the server actually signed with).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocol_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "cert_chain",
+        "cert_sig_alg",
+        "cipher",
+        "kems_tried",
+        "openssl_version",
+        "peer_sig_alg",
+        "protocol_version"
+      ],
+      "type": "object"
+    },
+    "TlsSection": {
+      "description": "TLS results per client stack.",
+      "properties": {
+        "diff": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KemDiff"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Difference between the two; null unless both sides produced a result."
+        },
+        "errors": {
+          "$ref": "#/$defs/SideErrors"
+        },
+        "experimental": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TlsReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Result with the experimental PQ client; null if not requested or failed."
+        },
+        "vanilla": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TlsReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Result with the stock client; null if not requested or failed (see `errors`)."
+        }
+      },
+      "required": [
+        "diff",
+        "errors",
+        "experimental",
+        "vanilla"
+      ],
+      "type": "object"
+    },
+    "ToolInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "One probe run against one target.",
+  "properties": {
+    "generated_at": {
+      "description": "When the report was produced: UTC, RFC 3339, e.g. \"2026-11-09T14:20:00Z\".",
+      "type": "string"
+    },
+    "request": {
+      "$ref": "#/$defs/RequestInfo",
+      "description": "What was asked for."
+    },
+    "schema_version": {
+      "description": "Major version of this schema (currently 1).",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "ssh": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SshSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "SSH results; null when SSH was not requested."
+    },
+    "target": {
+      "$ref": "#/$defs/ReportTarget"
+    },
+    "tls": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TlsSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "TLS results; null when TLS was not requested."
+    },
+    "tool": {
+      "$ref": "#/$defs/ToolInfo",
+      "description": "The program that produced the report."
+    }
+  },
+  "required": [
+    "generated_at",
+    "request",
+    "schema_version",
+    "ssh",
+    "target",
+    "tls",
+    "tool"
+  ],
+  "title": "Report",
+  "type": "object"
+}
