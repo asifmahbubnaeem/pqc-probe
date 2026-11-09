@@ -65,7 +65,11 @@ pub async fn run_scan(
         .filter(|r| !done.contains(&r.domain))
         .collect();
 
-    eprintln!("==> Scanning {} domains with {} concurrent probes", rows.len(), concurrency);
+    eprintln!(
+        "==> Scanning {} domains with {} concurrent probes",
+        rows.len(),
+        concurrency
+    );
 
     // Open output in append mode so we can resume cleanly.
     let output_file = std::fs::OpenOptions::new()
@@ -73,7 +77,10 @@ pub async fn run_scan(
         .append(true)
         .open(output)
         .with_context(|| format!("opening output {}", output.display()))?;
-    let write_header = done.is_empty() && std::fs::metadata(output).map(|m| m.len() == 0).unwrap_or(true);
+    let write_header = done.is_empty()
+        && std::fs::metadata(output)
+            .map(|m| m.len() == 0)
+            .unwrap_or(true);
     let mut writer = csv::WriterBuilder::new()
         .has_headers(write_header)
         .from_writer(output_file);
@@ -103,7 +110,7 @@ pub async fn run_scan(
                 ok_count += 1;
             }
             writer.serialize(&out).ok();
-            writer.flush().ok();  // flush per row so a crash loses at most one domain
+            writer.flush().ok(); // flush per row so a crash loses at most one domain
             done_count += 1;
             if done_count % 25 == 0 {
                 eprintln!("    [{}/{}]  ok={}", done_count, total, ok_count);
@@ -111,7 +118,12 @@ pub async fn run_scan(
         }
     }
 
-    eprintln!("==> Done. {}/{} ok. Results: {}", ok_count, total, output.display());
+    eprintln!(
+        "==> Done. {}/{} ok. Results: {}",
+        ok_count,
+        total,
+        output.display()
+    );
     Ok(())
 }
 
@@ -128,7 +140,12 @@ async fn probe_one(row: InputRow, timeout: Duration, openssl_path: &str) -> Outp
         Ok(report) => {
             let tls = report.tls.as_ref();
             let negotiated: Vec<&KemResult> = tls
-                .map(|t| t.kems_tried.iter().filter(|k| k.handshake_succeeded).collect())
+                .map(|t| {
+                    t.kems_tried
+                        .iter()
+                        .filter(|k| k.handshake_succeeded)
+                        .collect()
+                })
                 .unwrap_or_default();
 
             let kems_negotiated: Vec<String> = negotiated
@@ -137,14 +154,18 @@ async fn probe_one(row: InputRow, timeout: Duration, openssl_path: &str) -> Outp
                 .collect();
 
             let has_x25519mlkem768 = kems_negotiated.iter().any(|k| k == "X25519MLKEM768");
-            let has_mlkem = kems_negotiated.iter().any(|k| {
-                k.contains("MLKEM") || k.contains("mlkem") || k.contains("ML-KEM")
-            });
+            let has_mlkem = kems_negotiated
+                .iter()
+                .any(|k| k.contains("MLKEM") || k.contains("mlkem") || k.contains("ML-KEM"));
 
             // probe() returns Ok even when every KEM handshake failed (DNS failure,
             // refused connection, no TLS on :443). Only count it as "ok" if at least
             // one handshake actually completed.
-            let status = if negotiated.is_empty() { "no_handshake" } else { "ok" };
+            let status = if negotiated.is_empty() {
+                "no_handshake"
+            } else {
+                "ok"
+            };
             let error_msg = if negotiated.is_empty() {
                 "no KEM handshake succeeded (unreachable, no TLS, or timeout)".to_string()
             } else {
@@ -155,7 +176,9 @@ async fn probe_one(row: InputRow, timeout: Duration, openssl_path: &str) -> Outp
                 rank: row.rank,
                 domain: row.domain,
                 status,
-                tls_version: tls.and_then(|t| t.protocol_version.clone()).unwrap_or_default(),
+                tls_version: tls
+                    .and_then(|t| t.protocol_version.clone())
+                    .unwrap_or_default(),
                 cipher: tls.and_then(|t| t.cipher.clone()).unwrap_or_default(),
                 cert_sig_alg: tls.and_then(|t| t.cert_sig_alg.clone()).unwrap_or_default(),
                 peer_sig_alg: tls.and_then(|t| t.peer_sig_alg.clone()).unwrap_or_default(),

@@ -309,6 +309,9 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
         let v_set: HashSet<String> = v.client_can_negotiate.into_iter().collect();
         let e_set: HashSet<String> = e.client_can_negotiate.into_iter().collect();
         let only_e: Vec<String> = e_set.difference(&v_set).cloned().collect();
-        assert_eq!(only_e, vec!["sntrup761x25519-sha512@openssh.com".to_string()]);
+        assert_eq!(
+            only_e,
+            vec!["sntrup761x25519-sha512@openssh.com".to_string()]
+        );
     }
 }

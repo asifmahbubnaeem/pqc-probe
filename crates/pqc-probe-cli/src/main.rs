@@ -11,7 +11,11 @@ use std::time::Duration;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
-#[command(name = "pqc-probe", version, about = "Detect PQ crypto on TLS and SSH endpoints")]
+#[command(
+    name = "pqc-probe",
+    version,
+    about = "Detect PQ crypto on TLS and SSH endpoints"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -77,13 +81,20 @@ enum Output {
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
         .with_target(false)
         .init();
 
     let cli = Cli::parse();
     match cli.command {
-        Command::Scan { input, output, concurrency, timeout } => {
+        Command::Scan {
+            input,
+            output,
+            concurrency,
+            timeout,
+        } => {
             let openssl = std::env::var("PQC_PROBE_OPENSSL").unwrap_or_else(|_| "openssl".into());
             scan::run_scan(&input, &output, concurrency, timeout, openssl).await
         }
@@ -151,9 +162,9 @@ async fn run_probe(
                 tls_single = Some(probe(&tls_target, &opts).await.context("TLS probe")?);
             }
             Mode::Experimental => {
-                let path = oqs_openssl.clone().context(
-                    "experimental TLS mode requires PQC_PROBE_OPENSSL_OQS",
-                )?;
+                let path = oqs_openssl
+                    .clone()
+                    .context("experimental TLS mode requires PQC_PROBE_OPENSSL_OQS")?;
                 let opts = ProbeOptions {
                     mode: ProbeMode::Experimental,
                     timeout: timeout_dur,
@@ -175,7 +186,11 @@ async fn run_probe(
                     timeout: timeout_dur,
                     openssl_path: oqs_path,
                 };
-                tls_dual = Some(probe_dual(&tls_target, &v, &e).await.context("TLS dual probe")?);
+                tls_dual = Some(
+                    probe_dual(&tls_target, &v, &e)
+                        .await
+                        .context("TLS dual probe")?,
+                );
             }
         }
     }
@@ -190,9 +205,9 @@ async fn run_probe(
                 ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
             }
             Mode::Experimental => {
-                let path = oqs_ssh.clone().context(
-                    "experimental SSH mode requires PQC_PROBE_SSH_OQS",
-                )?;
+                let path = oqs_ssh
+                    .clone()
+                    .context("experimental SSH mode requires PQC_PROBE_SSH_OQS")?;
                 let opts = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: path,
@@ -258,7 +273,11 @@ async fn run_probe(
 }
 
 fn print_tls_single(report: &ProbeReport, experimental: bool) {
-    let label = if experimental { "TLS (experimental)" } else { "TLS" };
+    let label = if experimental {
+        "TLS (experimental)"
+    } else {
+        "TLS"
+    };
     println!("{}:", label);
     if let Some(tls) = &report.tls {
         if let Some(v) = &tls.protocol_version {
@@ -275,10 +294,17 @@ fn print_tls_single(report: &ProbeReport, experimental: bool) {
         }
         println!();
         println!("  KEMs:");
-        println!("    {:<24}  {:<24}  {}", "offered", "negotiated", "handshake");
+        println!(
+            "    {:<24}  {:<24}  {}",
+            "offered", "negotiated", "handshake"
+        );
         for kem in &tls.kems_tried {
             let neg = kem.negotiated.as_deref().unwrap_or("-");
-            let hs = if kem.handshake_succeeded { "ok" } else { "fail" };
+            let hs = if kem.handshake_succeeded {
+                "ok"
+            } else {
+                "fail"
+            };
             println!("    {:<24}  {:<24}  {}", kem.offered, neg, hs);
         }
     }
@@ -306,7 +332,10 @@ fn print_tls_dual(dual: &DualProbeReport) {
         .unwrap_or_default();
 
     println!("TLS KEMs (vanilla  vs  experimental):");
-    println!("  {:<24}  {:<16}  {:<16}", "offered", "vanilla", "experimental");
+    println!(
+        "  {:<24}  {:<16}  {:<16}",
+        "offered", "vanilla", "experimental"
+    );
     for kem in &offered {
         let v = if v_set.contains(kem) { "ok" } else { "-" };
         let e = if e_set.contains(kem) { "ok" } else { "-" };
@@ -318,7 +347,10 @@ fn print_tls_dual(dual: &DualProbeReport) {
         println!("  No TLS algorithms unlocked by oqs-provider on this target.");
     } else {
         if !dual.diff.only_experimental.is_empty() {
-            println!("  Only via oqs-provider ({}):", dual.diff.only_experimental.len());
+            println!(
+                "  Only via oqs-provider ({}):",
+                dual.diff.only_experimental.len()
+            );
             for n in &dual.diff.only_experimental {
                 println!("    + {}", n);
             }
@@ -333,18 +365,32 @@ fn print_tls_dual(dual: &DualProbeReport) {
 }
 
 fn print_ssh_single(report: &SshReport, experimental: bool) {
-    let label = if experimental { "SSH (experimental)" } else { "SSH" };
+    let label = if experimental {
+        "SSH (experimental)"
+    } else {
+        "SSH"
+    };
     println!("{}:", label);
     if let Some(v) = &report.server_version {
         println!("  Server version:    {}", v);
     }
-    println!("  Server offered KEX ({}):", report.server_offered_kex.len());
+    println!(
+        "  Server offered KEX ({}):",
+        report.server_offered_kex.len()
+    );
     for k in &report.server_offered_kex {
-        let can = if report.client_can_negotiate.contains(k) { "✓" } else { " " };
+        let can = if report.client_can_negotiate.contains(k) {
+            "✓"
+        } else {
+            " "
+        };
         println!("    {} {}", can, k);
     }
     println!();
-    println!("  Client can negotiate ({}):", report.client_can_negotiate.len());
+    println!(
+        "  Client can negotiate ({}):",
+        report.client_can_negotiate.len()
+    );
     for k in &report.client_can_negotiate {
         println!("    + {}", k);
     }
@@ -355,7 +401,11 @@ fn print_ssh_dual(dual: &DualSshReport) {
         .vanilla
         .as_ref()
         .map(|r| r.server_offered_kex.clone())
-        .or_else(|| dual.experimental.as_ref().map(|r| r.server_offered_kex.clone()))
+        .or_else(|| {
+            dual.experimental
+                .as_ref()
+                .map(|r| r.server_offered_kex.clone())
+        })
         .unwrap_or_default();
 
     let v_set: std::collections::HashSet<String> = dual
@@ -391,13 +441,19 @@ fn print_ssh_dual(dual: &DualSshReport) {
         println!("  Mainline ssh and OQS-OpenSSH negotiate identically on this target.");
     } else {
         if !dual.diff.only_experimental.is_empty() {
-            println!("  Only via OQS-OpenSSH ({}):", dual.diff.only_experimental.len());
+            println!(
+                "  Only via OQS-OpenSSH ({}):",
+                dual.diff.only_experimental.len()
+            );
             for n in &dual.diff.only_experimental {
                 println!("    + {}", n);
             }
         }
         if !dual.diff.only_vanilla.is_empty() {
-            println!("  Only via mainline ssh ({}):", dual.diff.only_vanilla.len());
+            println!(
+                "  Only via mainline ssh ({}):",
+                dual.diff.only_vanilla.len()
+            );
             for n in &dual.diff.only_vanilla {
                 println!("    - {}", n);
             }

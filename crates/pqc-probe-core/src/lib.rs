@@ -8,9 +8,7 @@
 pub mod ssh;
 
 // Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
-pub use ssh::{
-    probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
-};
+pub use ssh::{probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -197,16 +195,16 @@ async fn try_kem(
     let (stdout, stderr) = run_s_client(
         &opts.openssl_path,
         &[
-                "s_client",
-                "-4", // force IPv4: broken-IPv6 networks stall ~5s before fallback
-                "-connect",
-                &address,
-                "-tls1_3",
-                "-groups",
-                kem,
-                "-servername",
-                &target.host,
-            ],
+            "s_client",
+            "-4", // force IPv4: broken-IPv6 networks stall ~5s before fallback
+            "-connect",
+            &address,
+            "-tls1_3",
+            "-groups",
+            kem,
+            "-servername",
+            &target.host,
+        ],
         opts.timeout,
     )
     .await?;
@@ -217,8 +215,8 @@ async fn try_kem(
     let protocol_version = extract_kv(&combined, "Protocol");
 
     // Cipher — 3.0.x has "Cipher    : X", 3.5.x has "New, TLSv1.3, Cipher is X".
-    let cipher_raw = extract_kv(&combined, "Cipher")
-        .or_else(|| extract_after(&combined, "Cipher is "));
+    let cipher_raw =
+        extract_kv(&combined, "Cipher").or_else(|| extract_after(&combined, "Cipher is "));
 
     // Negotiated group — 3.0.x "Server Temp Key:", 3.5.x "Negotiated TLS1.3 group:".
     let server_temp_raw = extract_kv(&combined, "Server Temp Key")
@@ -246,8 +244,7 @@ async fn try_kem(
 
     // Prefer cert chain's `sigalg:` (clean, 3.5.x emits it on every chain line);
     // fall back to body-of-cert "Signature Algorithm:" line (3.0.x behavior).
-    let cert_sig_alg =
-        extract_chain_sigalg(&combined).or_else(|| extract_cert_sig_alg(&combined));
+    let cert_sig_alg = extract_chain_sigalg(&combined).or_else(|| extract_cert_sig_alg(&combined));
 
     Ok(KemAttempt {
         offered: kem.to_string(),
@@ -382,7 +379,9 @@ mod tests {
             Some("TLS_AES_256_GCM_SHA384".to_string())
         );
         assert_eq!(
-            extract_kv(OSSL_30X_SAMPLE, "Server Temp Key").as_deref().and_then(normalize_group),
+            extract_kv(OSSL_30X_SAMPLE, "Server Temp Key")
+                .as_deref()
+                .and_then(normalize_group),
             Some("X25519".to_string())
         );
         assert_eq!(
@@ -433,7 +432,10 @@ mod tests {
 
     #[test]
     fn normalize_group_cases() {
-        assert_eq!(normalize_group("X25519, 253 bits"), Some("X25519".to_string()));
+        assert_eq!(
+            normalize_group("X25519, 253 bits"),
+            Some("X25519".to_string())
+        );
         assert_eq!(
             normalize_group("ECDH, prime256v1, 256 bits"),
             Some("P-256".to_string())
@@ -450,18 +452,20 @@ mod tests {
     }
 
     #[test]
-    fn parses_3_5_x_classical_peer_temp_key(){
+    fn parses_3_5_x_classical_peer_temp_key() {
         let sample = "Protocol: TLSv1.3\n\
                       New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384\n\
                       Peer Temp Key: X25519, 253 bits\n";
         assert_eq!(
-            extract_kv(sample, "Peer Temp Key").as_deref().and_then(normalize_group),
+            extract_kv(sample, "Peer Temp Key")
+                .as_deref()
+                .and_then(normalize_group),
             Some("X25519".to_string())
         );
     }
 
     #[test]
-    fn normalize_group_rejects_null_sentinel(){
+    fn normalize_group_rejects_null_sentinel() {
         assert_eq!(normalize_group("<NULL>"), None);
     }
 }
@@ -659,7 +663,9 @@ async fn run_s_client(
             }
         }
     };
-    let timed_out = tokio::time::timeout(timeout, read_until_done).await.is_err();
+    let timed_out = tokio::time::timeout(timeout, read_until_done)
+        .await
+        .is_err();
 
     let _ = child.start_kill();
     let _ = child.wait().await;
