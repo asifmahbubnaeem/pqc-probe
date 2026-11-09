@@ -112,7 +112,7 @@ pub async fn run_scan(
             writer.serialize(&out).ok();
             writer.flush().ok(); // flush per row so a crash loses at most one domain
             done_count += 1;
-            if done_count % 25 == 0 {
+            if done_count.is_multiple_of(25) {
                 eprintln!("    [{}/{}]  ok={}", done_count, total, ok_count);
             }
         }

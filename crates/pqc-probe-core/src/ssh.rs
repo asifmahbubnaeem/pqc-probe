@@ -11,7 +11,7 @@
 
 use crate::{ProbeError, Target};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
 use tokio::process::Command;
 
@@ -41,6 +41,10 @@ pub struct SshReport {
     pub server_offered_kex: Vec<String>,
     /// Of the server's offer, which ones this client can actually negotiate.
     pub client_can_negotiate: Vec<String>,
+    /// First line of `ssh -V` for this client, e.g.
+    /// "OpenSSH_9.6p1 Ubuntu-3ubuntu13.20, OpenSSL 3.5.2 5 Aug 2025".
+    #[serde(default)]
+    pub client_version: Option<String>,
 }
 
 /// Dual SSH report: mainline ssh client vs OQS-OpenSSH ssh client.
@@ -50,6 +54,11 @@ pub struct DualSshReport {
     pub vanilla: Option<SshReport>,
     pub experimental: Option<SshReport>,
     pub diff: SshKexDiff,
+    /// Why that side's probe failed, if it did (the side's report is then None).
+    #[serde(default)]
+    pub vanilla_error: Option<String>,
+    #[serde(default)]
+    pub experimental_error: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -60,6 +69,10 @@ pub struct SshKexDiff {
     pub only_experimental: Vec<String>,
     /// KEX algorithms only the vanilla client can negotiate (rare but possible).
     pub only_vanilla: Vec<String>,
+    /// For `only_experimental` entries that stock OpenSSH also has in some release:
+    /// algorithm -> first mainline version ("9.9"). Entries absent here are truly OQS-only.
+    #[serde(default)]
+    pub mainline_since: BTreeMap<String, String>,
 }
 
 /// Probe an SSH target.
@@ -79,6 +92,7 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
 
     let server_offered_kex = parse_server_offer(&enum_output);
     let server_version = parse_server_version(&enum_output);
+    let client_version = detect_client_version(&opts.ssh_path).await;
 
     // Phase 2: for each offered KEX, try to negotiate with this client.
     // Run in parallel to keep the whole probe fast.
@@ -111,6 +125,7 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
         server_version,
         server_offered_kex,
         client_can_negotiate,
+        client_version,
     })
 }
 
@@ -125,8 +140,8 @@ pub async fn probe_ssh_dual(
         probe_ssh(target, experimental_opts),
     );
 
-    let vanilla = vanilla_result.ok();
-    let experimental = experimental_result.ok();
+    let (vanilla, vanilla_error) = crate::split_result(vanilla_result);
+    let (experimental, experimental_error) = crate::split_result(experimental_result);
 
     let v_set: HashSet<String> = vanilla
         .as_ref()
@@ -143,17 +158,50 @@ pub async fn probe_ssh_dual(
     only_experimental.sort();
     only_vanilla.sort();
     in_both.sort();
+    let mainline_since = annotate_mainline(&only_experimental);
 
     Ok(DualSshReport {
         target: target.clone(),
         vanilla,
         experimental,
+        vanilla_error,
+        experimental_error,
         diff: SshKexDiff {
             in_both,
             only_experimental,
             only_vanilla,
+            mainline_since,
         },
     })
+}
+
+/// Build the argument list for one `ssh -vv` attempt with a single forced KEX name.
+///
+/// `-4`: force IPv4. Without it ssh tries the AAAA record first, and on a network with broken
+/// IPv6 each attempt stalls for the connect timeout before falling back, which can exceed the
+/// probe timeout (same reason every `s_client` call passes `-4`).
+/// The host is always the single argument `nobody@<host>`; no shell is involved.
+fn ssh_args(host: &str, port: u16, kex: &str) -> Vec<String> {
+    vec![
+        "-4".to_string(),
+        "-vv".to_string(),
+        "-o".to_string(),
+        "BatchMode=yes".to_string(),
+        "-o".to_string(),
+        "StrictHostKeyChecking=no".to_string(),
+        "-o".to_string(),
+        "UserKnownHostsFile=/dev/null".to_string(),
+        "-o".to_string(),
+        "PasswordAuthentication=no".to_string(),
+        "-o".to_string(),
+        "ConnectTimeout=5".to_string(),
+        "-o".to_string(),
+        format!("KexAlgorithms={}", kex),
+        "-p".to_string(),
+        port.to_string(),
+        format!("nobody@{}", host),
+        "exit".to_string(),
+    ]
 }
 
 async fn run_ssh(
@@ -165,33 +213,14 @@ async fn run_ssh(
     // -vv for debug output we parse; disable auth prompts; fail fast on first
     // connect timeout. ssh will exit non-zero whether KEX fails or auth fails;
     // we parse stderr either way.
-    let host_arg = format!("nobody@{}", target.host);
-    let kex_arg = format!("KexAlgorithms={}", kex);
-    let port_arg = target.port.to_string();
-
+    // kill_on_drop: if the timeout below fires, the future is dropped; without this the
+    // ssh child would be left running as an orphan.
     let output = tokio::time::timeout(
         timeout,
         Command::new(ssh_path)
-            .args([
-                "-vv",
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                "StrictHostKeyChecking=no",
-                "-o",
-                "UserKnownHostsFile=/dev/null",
-                "-o",
-                "PasswordAuthentication=no",
-                "-o",
-                "ConnectTimeout=5",
-                "-o",
-                &kex_arg,
-                "-p",
-                &port_arg,
-                &host_arg,
-                "exit",
-            ])
+            .args(ssh_args(&target.host, target.port, kex))
             .stdin(std::process::Stdio::null())
+            .kill_on_drop(true)
             .output(),
     )
     .await
@@ -201,6 +230,64 @@ async fn run_ssh(
         "{}\n{}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
+    ))
+}
+
+/// Parse the OpenSSH (major, minor) out of `ssh -V` output.
+///
+/// "OpenSSH_9.6p1 Ubuntu-3ubuntu13.20, OpenSSL 3.5.2 ..." -> (9, 6)
+/// "OpenSSH_10.4-2026-08_p1, Open Quantum Safe 2026-08, ..." -> (10, 4)
+pub fn parse_openssh_version(s: &str) -> Option<(u32, u32)> {
+    let rest = s.trim().strip_prefix("OpenSSH_")?;
+    let (major, rest) = rest.split_once('.')?;
+    let major: u32 = major.parse().ok()?;
+    let minor: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+    Some((major, minor.parse().ok()?))
+}
+
+/// First stock-OpenSSH release that has this KEX algorithm, for algorithms the OQS fork
+/// also offers. Used to tell "needs OQS-OpenSSH" apart from "just needs a newer ssh".
+/// Only post-quantum KEX names are listed; anything else returns None.
+pub fn mainline_kex_since(alg: &str) -> Option<(u32, u32)> {
+    match alg {
+        // Vendor-named hybrid sntrup761+X25519: 8.5 per OpenSSH's release notes
+        // (recalled from them; not re-checked when this table was written).
+        "sntrup761x25519-sha512@openssh.com" => Some((8, 5)),
+        // OpenSSH 9.9 notes: the hybrid "now has an IANA-assigned name in addition to the
+        // @openssh.com vendor extension name".
+        "sntrup761x25519-sha512" => Some((9, 9)),
+        // OpenSSH 9.9 notes: "mlkem768x25519-sha256 is available by default".
+        "mlkem768x25519-sha256" => Some((9, 9)),
+        _ => None,
+    }
+}
+
+/// For each algorithm that stock OpenSSH has in some release, map it to that version
+/// ("9.9"). Algorithms missing from the result are genuinely OQS-only.
+pub fn annotate_mainline(algs: &[String]) -> BTreeMap<String, String> {
+    algs.iter()
+        .filter_map(|a| {
+            mainline_kex_since(a).map(|(maj, min)| (a.clone(), format!("{}.{}", maj, min)))
+        })
+        .collect()
+}
+
+/// Run `<ssh> -V` (prints to stderr) and return its first line.
+async fn detect_client_version(path: &str) -> Option<String> {
+    let out = tokio::time::timeout(
+        Duration::from_secs(5),
+        Command::new(path)
+            .arg("-V")
+            .stdin(std::process::Stdio::null())
+            .output(),
+    )
+    .await
+    .ok()?
+    .ok()?;
+    crate::first_nonempty_line(&format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&out.stderr),
+        String::from_utf8_lossy(&out.stdout)
     ))
 }
 
@@ -294,6 +381,7 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
             server_version: None,
             server_offered_kex: vec![],
             client_can_negotiate: vec!["curve25519-sha256".into(), "mlkem768x25519-sha256".into()],
+            client_version: None,
         };
         let e = SshReport {
             target: Target::new("example.com", 22),
@@ -304,6 +392,7 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
                 "mlkem768x25519-sha256".into(),
                 "sntrup761x25519-sha512@openssh.com".into(),
             ],
+            client_version: None,
         };
 
         let v_set: HashSet<String> = v.client_can_negotiate.into_iter().collect();
@@ -313,5 +402,78 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
             only_e,
             vec!["sntrup761x25519-sha512@openssh.com".to_string()]
         );
+    }
+}
+
+#[cfg(test)]
+mod version_diff_tests {
+    use super::*;
+
+    #[test]
+    fn parses_openssh_versions() {
+        assert_eq!(
+            parse_openssh_version("OpenSSH_9.6p1 Ubuntu-3ubuntu13.20, OpenSSL 3.5.2 5 Aug 2025"),
+            Some((9, 6))
+        );
+        assert_eq!(
+            parse_openssh_version(
+                "OpenSSH_10.4-2026-08_p1, Open Quantum Safe 2026-08, OpenSSL 3.5.2"
+            ),
+            Some((10, 4))
+        );
+        assert_eq!(parse_openssh_version("OpenSSH_8.0"), Some((8, 0)));
+        assert_eq!(parse_openssh_version("Dropbear v2022.83"), None);
+        assert_eq!(parse_openssh_version(""), None);
+    }
+
+    #[test]
+    fn mainline_table_lookups() {
+        assert_eq!(mainline_kex_since("mlkem768x25519-sha256"), Some((9, 9)));
+        assert_eq!(mainline_kex_since("sntrup761x25519-sha512"), Some((9, 9)));
+        assert_eq!(mainline_kex_since("curve25519-sha256"), None);
+        assert_eq!(mainline_kex_since("kyber-512-sha256"), None);
+    }
+
+    #[test]
+    fn annotate_splits_newer_mainline_from_oqs_only() {
+        let only_oqs = vec![
+            "mlkem768x25519-sha256".to_string(),
+            "sntrup761x25519-sha512".to_string(),
+            "some-oqs-only-kex@example.com".to_string(),
+        ];
+        let m = annotate_mainline(&only_oqs);
+        assert_eq!(m.len(), 2);
+        assert_eq!(
+            m.get("mlkem768x25519-sha256").map(String::as_str),
+            Some("9.9")
+        );
+        assert!(!m.contains_key("some-oqs-only-kex@example.com"));
+    }
+}
+
+#[cfg(test)]
+mod ssh_args_tests {
+    use super::*;
+
+    #[test]
+    fn forces_ipv4_and_single_kex() {
+        let a = ssh_args("github.com", 22, "mlkem768x25519-sha256");
+        assert_eq!(a[0], "-4");
+        assert!(a.contains(&"KexAlgorithms=mlkem768x25519-sha256".to_string()));
+        assert!(a.contains(&"BatchMode=yes".to_string()));
+    }
+
+    #[test]
+    fn host_is_one_argument_after_the_port() {
+        let a = ssh_args("example.com", 2222, "x");
+        let n = a.len();
+        assert_eq!(a[n - 1], "exit");
+        assert_eq!(a[n - 2], "nobody@example.com");
+        assert_eq!(a[n - 3], "2222");
+        assert_eq!(a[n - 4], "-p");
+        // a hostile-looking host stays inside a single `nobody@...` argument
+        let h = ssh_args("-oProxyCommand=evil", 22, "x");
+        assert_eq!(h[h.len() - 2], "nobody@-oProxyCommand=evil");
+        assert_eq!(h.iter().filter(|s| s.contains("ProxyCommand")).count(), 1);
     }
 }

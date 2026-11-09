@@ -8,7 +8,10 @@
 pub mod ssh;
 
 // Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
-pub use ssh::{probe_ssh, probe_ssh_dual, DualSshReport, SshKexDiff, SshProbeOptions, SshReport};
+pub use ssh::{
+    annotate_mainline, mainline_kex_since, parse_openssh_version, probe_ssh, probe_ssh_dual,
+    DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
+};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -89,6 +92,13 @@ pub struct TlsReport {
     pub cert_sig_alg: Option<String>,
     /// Signature algorithm used in CertificateVerify (what the server actually signed with).
     pub peer_sig_alg: Option<String>,
+    /// Certificate chain as sent by the server (depth 0 = leaf). Empty if none was parsed.
+    #[serde(default)]
+    pub cert_chain: Vec<CertInfo>,
+    /// First line of `<openssl> version` for the client binary used, e.g.
+    /// "OpenSSL 3.5.2 5 Aug 2025 (Library: OpenSSL 3.5.2 5 Aug 2025)".
+    #[serde(default)]
+    pub openssl_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,6 +144,7 @@ pub const KEM_CANDIDATES: &[&str] = &[
 async fn probe_tls(target: &Target, opts: &ProbeOptions) -> Result<TlsReport, ProbeError> {
     // Probe each KEM in parallel. For each, run openssl s_client with -groups $KEM
     // and parse the result.
+    let openssl_version = detect_openssl_version(&opts.openssl_path).await;
     let mut handles = Vec::with_capacity(KEM_CANDIDATES.len());
     for &kem in KEM_CANDIDATES {
         let target = target.clone();
@@ -149,6 +160,7 @@ async fn probe_tls(target: &Target, opts: &ProbeOptions) -> Result<TlsReport, Pr
     let mut cipher = None;
     let mut cert_sig_alg = None;
     let mut peer_sig_alg = None;
+    let mut cert_chain: Vec<CertInfo> = Vec::new();
 
     for handle in handles {
         if let Ok(Ok(result)) = handle.await {
@@ -158,6 +170,9 @@ async fn probe_tls(target: &Target, opts: &ProbeOptions) -> Result<TlsReport, Pr
                 cipher = cipher.or(result.cipher);
                 cert_sig_alg = cert_sig_alg.or(result.cert_sig_alg);
                 peer_sig_alg = peer_sig_alg.or(result.peer_sig_alg);
+                if cert_chain.is_empty() {
+                    cert_chain = result.cert_chain;
+                }
             }
             kems_tried.push(KemResult {
                 offered: result.offered,
@@ -173,6 +188,8 @@ async fn probe_tls(target: &Target, opts: &ProbeOptions) -> Result<TlsReport, Pr
         kems_tried,
         cert_sig_alg,
         peer_sig_alg,
+        cert_chain,
+        openssl_version,
     })
 }
 
@@ -184,6 +201,7 @@ struct KemAttempt {
     cipher: Option<String>,
     cert_sig_alg: Option<String>,
     peer_sig_alg: Option<String>,
+    cert_chain: Vec<CertInfo>,
 }
 
 async fn try_kem(
@@ -212,7 +230,11 @@ async fn try_kem(
     let combined = format!("{}\n{}", stdout, stderr);
 
     // Protocol — same label, tolerate 0, 1, 2 or more spaces before the colon.
-    let protocol_version = extract_kv(&combined, "Protocol");
+    // OpenSSL 3.5.x prints the "Protocol :" line only in the SSL-Session block, which comes
+    // after "Verify return code:" (where we stop reading) -- so fall back to the
+    // "New, TLSv1.3, Cipher is ..." summary line, which is always before it.
+    let protocol_version =
+        extract_kv(&combined, "Protocol").or_else(|| extract_new_line_protocol(&combined));
 
     // Cipher — 3.0.x has "Cipher    : X", 3.5.x has "New, TLSv1.3, Cipher is X".
     let cipher_raw =
@@ -239,12 +261,18 @@ async fn try_kem(
             .map(|p| p.starts_with("TLSv1.3") || p.starts_with("TLS 1.3"))
             .unwrap_or(false);
 
-    let negotiated = server_temp_raw.as_deref().and_then(normalize_group);
+    let negotiated = resolve_negotiated(
+        server_temp_raw.as_deref().and_then(normalize_group),
+        kem,
+        handshake_succeeded,
+    );
     let cipher = cipher_raw.filter(|c| !c.contains("(NONE)"));
 
     // Prefer cert chain's `sigalg:` (clean, 3.5.x emits it on every chain line);
     // fall back to body-of-cert "Signature Algorithm:" line (3.0.x behavior).
     let cert_sig_alg = extract_chain_sigalg(&combined).or_else(|| extract_cert_sig_alg(&combined));
+
+    let cert_chain = parse_cert_chain(&combined);
 
     Ok(KemAttempt {
         offered: kem.to_string(),
@@ -254,6 +282,214 @@ async fn try_kem(
         cipher,
         cert_sig_alg,
         peer_sig_alg,
+        cert_chain,
+    })
+}
+
+/// One certificate in the server's chain, as reported by `openssl s_client`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CertInfo {
+    /// 0 = leaf; higher numbers are closer to the root.
+    pub depth: u8,
+    pub subject: String,
+    pub issuer: String,
+    pub signature_algorithm: Option<String>,
+    /// Key type as openssl prints it, e.g. "id-ecPublicKey", "rsaEncryption", "ML-DSA-65".
+    pub public_key_type: Option<String>,
+    pub public_key_bits: Option<u32>,
+    pub not_before: Option<String>,
+    pub not_after: Option<String>,
+    /// subject == issuer, i.e. a real root. Servers usually don't send the root, so the
+    /// last cert in the chain is typically *not* self-signed.
+    pub self_signed: bool,
+    /// The signature algorithm or the key type is post-quantum.
+    pub post_quantum: bool,
+}
+
+/// True if an algorithm / key-type name is a post-quantum signature scheme.
+pub fn is_pq_signature_name(name: &str) -> bool {
+    let n = name.to_ascii_uppercase();
+    [
+        "ML-DSA",
+        "MLDSA",
+        "SLH-DSA",
+        "SLHDSA",
+        "DILITHIUM",
+        "FALCON",
+        "FN-DSA",
+        "SPHINCS",
+    ]
+    .iter()
+    .any(|p| n.contains(p))
+}
+
+/// Parse the "Certificate chain" block of `openssl s_client` output.
+///
+/// Handles the 3.x format:
+/// ```text
+/// Certificate chain
+///  0 s:CN = github.com
+///    i:C = GB, O = Sectigo Limited, CN = ...
+///    a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA256
+///    v:NotBefore: Oct 30 00:00:00 2026 GMT; NotAfter: Jan 27 23:59:59 2027 GMT
+/// ```
+/// Every field except depth and subject is optional; PEM bodies (from `-showcerts`)
+/// are ignored. Returns an empty Vec when there is no chain block.
+pub fn parse_cert_chain(text: &str) -> Vec<CertInfo> {
+    let mut chain: Vec<CertInfo> = Vec::new();
+    let mut in_chain = false;
+
+    for line in text.lines() {
+        let t = line.trim();
+        if !in_chain {
+            if t == "Certificate chain" {
+                in_chain = true;
+            }
+            continue;
+        }
+        if t == "---" {
+            break; // end of block (PEM armor lines have 5 dashes, so they don't match)
+        }
+
+        // Entry header: "<depth> s:<subject>"
+        if let Some((num, rest)) = t.split_once(' ') {
+            if let (Ok(depth), Some(subject)) = (num.parse::<u8>(), rest.strip_prefix("s:")) {
+                chain.push(CertInfo {
+                    depth,
+                    subject: subject.trim().to_string(),
+                    issuer: String::new(),
+                    signature_algorithm: None,
+                    public_key_type: None,
+                    public_key_bits: None,
+                    not_before: None,
+                    not_after: None,
+                    self_signed: false,
+                    post_quantum: false,
+                });
+                continue;
+            }
+        }
+
+        if let Some(c) = chain.last_mut() {
+            if let Some(v) = t.strip_prefix("i:") {
+                c.issuer = v.trim().to_string();
+            } else if let Some(v) = t.strip_prefix("a:") {
+                parse_chain_a_line(c, v);
+            } else if let Some(v) = t.strip_prefix("v:") {
+                parse_chain_v_line(c, v);
+            }
+        }
+    }
+
+    for c in &mut chain {
+        c.self_signed = !c.subject.is_empty() && c.subject == c.issuer;
+        c.post_quantum = c
+            .signature_algorithm
+            .as_deref()
+            .map(is_pq_signature_name)
+            .unwrap_or(false)
+            || c.public_key_type
+                .as_deref()
+                .map(is_pq_signature_name)
+                .unwrap_or(false);
+    }
+    chain
+}
+
+/// "PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA256"
+/// "PKEY: ML-DSA-65; sigalg: ML-DSA-65"   (no comma, no bit count)
+fn parse_chain_a_line(c: &mut CertInfo, s: &str) {
+    for part in s.split(';') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("PKEY:") {
+            let rest = rest.trim();
+            let (ty, tail) = match rest.split_once(',') {
+                Some((a, b)) => (a.trim(), b.trim()),
+                None => (rest, ""),
+            };
+            if !ty.is_empty() {
+                c.public_key_type = Some(ty.to_string());
+            }
+            // tail is "256 (bit)" on 3.x; older builds print a curve name instead.
+            c.public_key_bits = tail
+                .split_whitespace()
+                .next()
+                .and_then(|n| n.parse::<u32>().ok());
+        } else if let Some(rest) = part.strip_prefix("sigalg:") {
+            let rest = rest.trim();
+            if !rest.is_empty() {
+                c.signature_algorithm = Some(rest.to_string());
+            }
+        }
+    }
+}
+
+/// "NotBefore: Oct 30 00:00:00 2026 GMT; NotAfter: Jan 27 23:59:59 2027 GMT"
+fn parse_chain_v_line(c: &mut CertInfo, s: &str) {
+    for part in s.split(';') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("NotBefore:") {
+            c.not_before = Some(rest.trim().to_string());
+        } else if let Some(rest) = part.strip_prefix("NotAfter:") {
+            c.not_after = Some(rest.trim().to_string());
+        }
+    }
+}
+
+/// First non-empty line of `text`, trimmed.
+pub(crate) fn first_nonempty_line(text: &str) -> Option<String> {
+    text.lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .map(String::from)
+}
+
+/// Run `<openssl> version` and return its first line (None if it can't be run).
+async fn detect_openssl_version(path: &str) -> Option<String> {
+    let out = tokio::time::timeout(
+        Duration::from_secs(5),
+        Command::new(path)
+            .arg("version")
+            .stdin(std::process::Stdio::null())
+            .output(),
+    )
+    .await
+    .ok()?
+    .ok()?;
+    first_nonempty_line(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// Decide the negotiated group for one single-group attempt.
+///
+/// We offer exactly one group per attempt (`-groups <kem>`), so a successful handshake can
+/// only have used that group. Some openssl builds don't report it -- notably a 3.0.x
+/// `s_client` binary linked against the 3.5.x library can't print a hybrid group's name --
+/// so when nothing was reported but the handshake worked, fall back to the offered group.
+/// A reported value always wins; a failed handshake never yields a group.
+fn resolve_negotiated(
+    reported: Option<String>,
+    offered: &str,
+    handshake_ok: bool,
+) -> Option<String> {
+    match reported {
+        Some(g) => Some(g),
+        None if handshake_ok => Some(offered.to_string()),
+        None => None,
+    }
+}
+
+/// Protocol from the handshake summary line "New, TLSv1.3, Cipher is TLS_AES_128_GCM_SHA256".
+/// A failed handshake prints "New, (NONE), Cipher is (NONE)"; that yields None.
+fn extract_new_line_protocol(text: &str) -> Option<String> {
+    text.lines().find_map(|line| {
+        let rest = line.trim().strip_prefix("New, ")?;
+        let (proto, _) = rest.split_once(", Cipher is")?;
+        let proto = proto.trim();
+        if proto.is_empty() || proto.contains("NONE") {
+            None
+        } else {
+            Some(proto.to_string())
+        }
     })
 }
 
@@ -481,6 +717,11 @@ pub struct DualProbeReport {
     pub vanilla: Option<ProbeReport>,
     pub experimental: Option<ProbeReport>,
     pub diff: KemDiff,
+    /// Why that side's probe failed, if it did (the side's report is then None).
+    #[serde(default)]
+    pub vanilla_error: Option<String>,
+    #[serde(default)]
+    pub experimental_error: Option<String>,
 }
 
 /// Diff summary across the two probes' negotiated KEM sets.
@@ -509,8 +750,8 @@ pub async fn probe_dual(
         probe(target, experimental_opts),
     );
 
-    let vanilla = vanilla_result.ok();
-    let experimental = experimental_result.ok();
+    let (vanilla, vanilla_error) = split_result(vanilla_result);
+    let (experimental, experimental_error) = split_result(experimental_result);
 
     let diff = compute_diff(vanilla.as_ref(), experimental.as_ref());
 
@@ -519,7 +760,17 @@ pub async fn probe_dual(
         vanilla,
         experimental,
         diff,
+        vanilla_error,
+        experimental_error,
     })
+}
+
+/// Keep a probe's error text instead of discarding it, so reports can say why a side is empty.
+pub(crate) fn split_result<T>(r: Result<T, ProbeError>) -> (Option<T>, Option<String>) {
+    match r {
+        Ok(v) => (Some(v), None),
+        Err(e) => (None, Some(e.to_string())),
+    }
 }
 
 fn compute_diff(vanilla: Option<&ProbeReport>, experimental: Option<&ProbeReport>) -> KemDiff {
@@ -577,6 +828,8 @@ mod dual_tests {
                     .collect(),
                 cert_sig_alg: None,
                 peer_sig_alg: None,
+                cert_chain: vec![],
+                openssl_version: None,
             }),
         }
     }
@@ -613,7 +866,8 @@ mod dual_tests {
 // ---------- s_client runner ----------
 
 /// Marker printed at the end of s_client's post-handshake summary (3.0.x and 3.5.x).
-/// Every field the parser needs (chain, peer sig, group, cipher, protocol) comes before it.
+/// Every field the parser needs (chain, peer sig, group, cipher, protocol) comes before it,
+/// except the "Protocol :" line on 3.5.x, which is recovered from the "New, ..." line.
 const SCLIENT_DONE_MARKER: &[u8] = b"Verify return code:";
 
 /// Run `openssl s_client` and return (stdout, stderr) as soon as the handshake summary
@@ -683,4 +937,193 @@ async fn run_s_client(
         String::from_utf8_lossy(&out).into_owned(),
         String::from_utf8_lossy(&err).into_owned(),
     ))
+}
+
+#[cfg(test)]
+mod chain_tests {
+    use super::*;
+
+    /// Trimmed from a real `openssl s_client -showcerts -connect github.com:443` capture
+    /// (OpenSSL 3.5.2 library), PEM bodies shortened.
+    const GITHUB_CAPTURE: &str = r#"depth=2 C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication Root E46
+verify error:num=20:unable to get local issuer certificate
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = github.com
+   i:C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication CA DV E36
+   a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA256
+   v:NotBefore: Oct 30 00:00:00 2026 GMT; NotAfter: Jan 27 23:59:59 2027 GMT
+-----BEGIN CERTIFICATE-----
+MIIFAKEFAKEFAKE
+-----END CERTIFICATE-----
+ 1 s:C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication CA DV E36
+   i:C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication Root E46
+   a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA384
+   v:NotBefore: Mar 22 00:00:00 2021 GMT; NotAfter: Mar 21 23:59:59 2036 GMT
+-----BEGIN CERTIFICATE-----
+MIIFAKEFAKEFAKE
+-----END CERTIFICATE-----
+ 2 s:C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication Root E46
+   i:C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust ECC Certification Authority
+   a:PKEY: id-ecPublicKey, 384 (bit); sigalg: ecdsa-with-SHA384
+   v:NotBefore: Mar 22 00:00:00 2021 GMT; NotAfter: Jan 18 23:59:59 2038 GMT
+-----BEGIN CERTIFICATE-----
+MIIFAKEFAKEFAKE
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=CN = github.com
+"#;
+
+    #[test]
+    fn parses_github_chain() {
+        let chain = parse_cert_chain(GITHUB_CAPTURE);
+        assert_eq!(chain.len(), 3);
+        assert_eq!(
+            chain.iter().map(|c| c.depth).collect::<Vec<_>>(),
+            vec![0, 1, 2]
+        );
+        assert_eq!(chain[0].subject, "CN = github.com");
+        assert_eq!(
+            chain[0].signature_algorithm.as_deref(),
+            Some("ecdsa-with-SHA256")
+        );
+        assert_eq!(chain[0].public_key_type.as_deref(), Some("id-ecPublicKey"));
+        assert_eq!(chain[0].public_key_bits, Some(256));
+        assert_eq!(chain[2].public_key_bits, Some(384));
+        assert_eq!(
+            chain[0].not_before.as_deref(),
+            Some("Oct 30 00:00:00 2026 GMT")
+        );
+        assert_eq!(
+            chain[0].not_after.as_deref(),
+            Some("Jan 27 23:59:59 2027 GMT")
+        );
+        // each cert's issuer is the next cert's subject
+        assert_eq!(chain[0].issuer, chain[1].subject);
+        assert_eq!(chain[1].issuer, chain[2].subject);
+    }
+
+    #[test]
+    fn github_chain_is_classical_and_root_not_sent() {
+        let chain = parse_cert_chain(GITHUB_CAPTURE);
+        assert!(chain.iter().all(|c| !c.post_quantum));
+        // The server stops at an intermediate; the real root (USERTrust) isn't sent.
+        assert!(chain.iter().all(|c| !c.self_signed));
+    }
+
+    #[test]
+    fn detects_self_signed_root() {
+        let text = "Certificate chain\n 0 s:CN = Root\n   i:CN = Root\n---\n";
+        let chain = parse_cert_chain(text);
+        assert_eq!(chain.len(), 1);
+        assert!(chain[0].self_signed);
+        assert_eq!(chain[0].signature_algorithm, None);
+    }
+
+    #[test]
+    fn flags_pq_certs_without_bit_count() {
+        let text = "Certificate chain\n\
+ 0 s:CN = pq.example\n\
+   i:CN = Classical CA\n\
+   a:PKEY: ML-DSA-65; sigalg: ML-DSA-65\n\
+ 1 s:CN = Classical CA\n\
+   i:CN = Classical Root\n\
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: sha256WithRSAEncryption\n\
+---\n";
+        let chain = parse_cert_chain(text);
+        assert_eq!(chain.len(), 2);
+        assert!(chain[0].post_quantum);
+        assert_eq!(chain[0].public_key_type.as_deref(), Some("ML-DSA-65"));
+        assert_eq!(chain[0].public_key_bits, None);
+        assert!(!chain[1].post_quantum);
+        assert_eq!(chain[1].public_key_bits, Some(2048));
+    }
+
+    #[test]
+    fn pq_name_detection() {
+        assert!(is_pq_signature_name("ML-DSA-44"));
+        assert!(is_pq_signature_name("SLH-DSA-SHA2-128s"));
+        assert!(is_pq_signature_name("p256_mldsa44"));
+        assert!(!is_pq_signature_name("ecdsa-with-SHA256"));
+        assert!(!is_pq_signature_name("sha256WithRSAEncryption"));
+    }
+
+    #[test]
+    fn no_chain_block_gives_empty() {
+        assert!(parse_cert_chain("CONNECTED(00000003)\nsome other output\n").is_empty());
+        assert!(parse_cert_chain("").is_empty());
+    }
+}
+
+#[cfg(test)]
+mod protocol_tests {
+    use super::*;
+
+    /// Lines from a real 3.5.2-library `s_client -tls1_3 -groups X25519` run against github.com
+    /// (no "Protocol :" line before "Verify return code:").
+    const GITHUB_SUMMARY: &str = "\
+Server Temp Key: X25519, 253 bits\n\
+SSL handshake has read 3095 bytes and written 1614 bytes\n\
+New, TLSv1.3, Cipher is TLS_AES_128_GCM_SHA256\n\
+Server public key is 256 bit\n\
+Verify return code: 20 (unable to get local issuer certificate)\n";
+
+    #[test]
+    fn protocol_from_new_line() {
+        assert_eq!(
+            extract_new_line_protocol(GITHUB_SUMMARY).as_deref(),
+            Some("TLSv1.3")
+        );
+        // and there is genuinely no "Protocol :" line to find
+        assert_eq!(extract_kv(GITHUB_SUMMARY, "Protocol"), None);
+    }
+
+    #[test]
+    fn failed_handshake_has_no_protocol() {
+        let text = "New, (NONE), Cipher is (NONE)\n";
+        assert_eq!(extract_new_line_protocol(text), None);
+        assert_eq!(extract_new_line_protocol("nothing here"), None);
+    }
+}
+
+#[cfg(test)]
+mod negotiated_tests {
+    use super::*;
+
+    #[test]
+    fn reported_group_wins() {
+        assert_eq!(
+            resolve_negotiated(Some("X25519".into()), "X25519MLKEM768", true).as_deref(),
+            Some("X25519")
+        );
+    }
+
+    #[test]
+    fn unreported_group_falls_back_to_offered_on_success() {
+        assert_eq!(
+            resolve_negotiated(None, "X25519MLKEM768", true).as_deref(),
+            Some("X25519MLKEM768")
+        );
+    }
+
+    #[test]
+    fn failed_handshake_never_yields_a_group() {
+        assert_eq!(resolve_negotiated(None, "P-384", false), None);
+    }
+}
+
+#[cfg(test)]
+mod version_tests {
+    use super::*;
+
+    #[test]
+    fn first_nonempty_line_skips_blanks_and_trims() {
+        assert_eq!(
+            first_nonempty_line("\n  \nOpenSSL 3.5.2 5 Aug 2025  \nsecond\n").as_deref(),
+            Some("OpenSSL 3.5.2 5 Aug 2025")
+        );
+        assert_eq!(first_nonempty_line("  \n"), None);
+    }
 }
