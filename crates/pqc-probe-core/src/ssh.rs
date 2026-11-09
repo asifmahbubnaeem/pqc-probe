@@ -21,6 +21,9 @@ pub struct SshProbeOptions {
     pub timeout: Duration,
     /// Path to the ssh binary. Defaults to "ssh" from $PATH.
     pub ssh_path: String,
+    /// Most `ssh` processes run at once in the per-algorithm phase. Each attempt is a real
+    /// connection to the target, so keep this low for hosted use.
+    pub max_parallel: usize,
 }
 
 impl Default for SshProbeOptions {
@@ -28,6 +31,7 @@ impl Default for SshProbeOptions {
         Self {
             timeout: Duration::from_secs(10),
             ssh_path: "ssh".to_string(),
+            max_parallel: 4,
         }
     }
 }
@@ -96,13 +100,16 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
 
     // Phase 2: for each offered KEX, try to negotiate with this client.
     // Run in parallel to keep the whole probe fast.
+    let limiter = std::sync::Arc::new(tokio::sync::Semaphore::new(opts.max_parallel.max(1)));
     let mut handles = Vec::with_capacity(server_offered_kex.len());
     for kex in &server_offered_kex {
+        let limiter = std::sync::Arc::clone(&limiter);
         let kex = kex.clone();
         let ssh_path = opts.ssh_path.clone();
         let target = target.clone();
         let timeout = opts.timeout;
         handles.push(tokio::spawn(async move {
+            let _permit = limiter.acquire_owned().await.ok()?;
             let output = run_ssh(&ssh_path, &target, timeout, &kex).await.ok()?;
             if negotiated_kex(&output).as_deref() == Some(kex.as_str()) {
                 Some(kex)
@@ -184,6 +191,10 @@ pub async fn probe_ssh_dual(
 fn ssh_args(host: &str, port: u16, kex: &str) -> Vec<String> {
     vec![
         "-4".to_string(),
+        // Ignore ~/.ssh/config and /etc/ssh/ssh_config: a user or system config (ProxyCommand,
+        // ProxyJump, Host * options) must not change where or how the probe connects.
+        "-F".to_string(),
+        "/dev/null".to_string(),
         "-vv".to_string(),
         "-o".to_string(),
         "BatchMode=yes".to_string(),
@@ -218,7 +229,7 @@ async fn run_ssh(
     let output = tokio::time::timeout(
         timeout,
         Command::new(ssh_path)
-            .args(ssh_args(&target.host, target.port, kex))
+            .args(ssh_args(&target.connect_host(), target.port, kex))
             .stdin(std::process::Stdio::null())
             .kill_on_drop(true)
             .output(),
@@ -475,5 +486,23 @@ mod ssh_args_tests {
         let h = ssh_args("-oProxyCommand=evil", 22, "x");
         assert_eq!(h[h.len() - 2], "nobody@-oProxyCommand=evil");
         assert_eq!(h.iter().filter(|s| s.contains("ProxyCommand")).count(), 1);
+    }
+}
+
+#[cfg(test)]
+mod ssh_hardening_tests {
+    use super::*;
+
+    #[test]
+    fn ignores_user_and_system_ssh_config() {
+        let a = ssh_args("example.com", 22, "x");
+        let i = a.iter().position(|s| s == "-F").expect("-F present");
+        assert_eq!(a[i + 1], "/dev/null");
+    }
+
+    #[test]
+    fn default_parallelism_is_bounded() {
+        let o = SshProbeOptions::default();
+        assert!(o.max_parallel >= 1 && o.max_parallel <= 8);
     }
 }

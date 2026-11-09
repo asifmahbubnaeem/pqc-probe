@@ -142,10 +142,12 @@ async fn run_probe(
     }
     let tls_target = Target {
         host: target.host.clone(),
+        resolved: None,
         port: tls_port.unwrap_or(target.port),
     };
     let ssh_target = Target {
         host: target.host.clone(),
+        resolved: None,
         // When probing both protocols, use the SSH default if the given port looks TLS-y
         port: ssh_port.unwrap_or(
             if protocol == Protocol::Both && target.port == tls_default_port {
@@ -225,6 +227,7 @@ async fn run_probe(
                 let opts = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: vanilla_ssh.clone(),
+                    ..Default::default()
                 };
                 ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
             }
@@ -238,6 +241,7 @@ async fn run_probe(
                 let opts = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: path,
+                    ..Default::default()
                 };
                 ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
             }
@@ -251,10 +255,12 @@ async fn run_probe(
                 let v = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: vanilla_ssh.clone(),
+                    ..Default::default()
                 };
                 let e = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: oqs_path,
+                    ..Default::default()
                 };
                 ssh_dual = Some(
                     probe_ssh_dual(&ssh_target, &v, &e)

@@ -5,9 +5,11 @@
 //! group, run in parallel); dual mode diffs vanilla OpenSSL against
 //! OpenSSL + oqs-provider. SSH probing lives in [`ssh`].
 
+pub mod policy;
 pub mod ssh;
 
 // Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
+pub use policy::{check_resolved, prepare_target, Policy, PolicyError};
 pub use ssh::{
     annotate_mainline, mainline_kex_since, parse_openssh_version, probe_ssh, probe_ssh_dual,
     DualSshReport, SshKexDiff, SshProbeOptions, SshReport,
@@ -24,6 +26,10 @@ use tokio::process::Command;
 pub struct Target {
     pub host: String,
     pub port: u16,
+    /// Pre-resolved, policy-checked address to connect to instead of resolving `host` again
+    /// (see [`policy`]). `host` is still used for SNI. Never serialized.
+    #[serde(skip)]
+    pub resolved: Option<std::net::IpAddr>,
 }
 
 impl Target {
@@ -31,6 +37,21 @@ impl Target {
         Self {
             host: host.into(),
             port,
+            resolved: None,
+        }
+    }
+
+    /// Pin this target to an already-checked address.
+    pub fn with_resolved(mut self, ip: impl Into<std::net::IpAddr>) -> Self {
+        self.resolved = Some(ip.into());
+        self
+    }
+
+    /// What to connect to: the pinned address if there is one, otherwise the host name.
+    pub fn connect_host(&self) -> String {
+        match self.resolved {
+            Some(ip) => ip.to_string(),
+            None => self.host.clone(),
         }
     }
 
@@ -209,7 +230,7 @@ async fn try_kem(
     opts: &ProbeOptions,
     kem: &str,
 ) -> Result<KemAttempt, ProbeError> {
-    let address = format!("{}:{}", target.host, target.port);
+    let address = format!("{}:{}", target.connect_host(), target.port);
     let (stdout, stderr) = run_s_client(
         &opts.openssl_path,
         &[
@@ -1125,5 +1146,30 @@ mod version_tests {
             Some("OpenSSL 3.5.2 5 Aug 2025")
         );
         assert_eq!(first_nonempty_line("  \n"), None);
+    }
+}
+
+#[cfg(test)]
+mod target_tests {
+    use super::*;
+
+    #[test]
+    fn connect_host_prefers_resolved_address() {
+        let t = Target::new("example.com", 443);
+        assert_eq!(t.connect_host(), "example.com");
+        let t = t.with_resolved(std::net::Ipv4Addr::new(93, 184, 216, 34));
+        assert_eq!(t.connect_host(), "93.184.216.34");
+        assert_eq!(t.host, "example.com"); // still the SNI name
+    }
+
+    #[test]
+    fn resolved_address_is_not_serialized() {
+        let t = Target::new("example.com", 443).with_resolved(std::net::Ipv4Addr::new(1, 2, 3, 4));
+        assert_eq!(
+            serde_json::to_string(&t).unwrap(),
+            r#"{"host":"example.com","port":443}"#
+        );
+        let back: Target = serde_json::from_str(r#"{"host":"example.com","port":443}"#).unwrap();
+        assert!(back.resolved.is_none());
     }
 }
