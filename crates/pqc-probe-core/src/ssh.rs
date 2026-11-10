@@ -434,6 +434,12 @@ fn classify_attempt(kex: &str, text: &str) -> KexOutcome {
     if text.contains("Unsupported KEX algorithm") || text.contains("Bad SSH2 KexAlgorithms") {
         return KexOutcome::NotNegotiable;
     }
+    // The client and the server share no algorithm: a definite answer for this pair.
+    if text.contains("no matching key exchange method found")
+        || text.contains("kex: algorithm: (no match)")
+    {
+        return KexOutcome::NotNegotiable;
+    }
     let network_trouble = [
         "Connection reset",
         "Connection closed",
@@ -1073,5 +1079,22 @@ mod pacing_tests {
         let o = SshProbeOptions::default();
         assert_eq!(o.max_parallel, 1);
         assert!(o.pace >= Duration::from_secs(1));
+    }
+}
+
+#[cfg(test)]
+mod no_common_algorithm_tests {
+    use super::*;
+
+    // Real output: stock OpenSSH 9.6 forced to sntrup761x25519-sha512@openssh.com against the
+    // OQS test bench.
+    const NO_COMMON: &str = "debug1: kex: algorithm: (no match)\nUnable to negotiate with 16.174.45.162 port 2222: no matching key exchange method found. Their offer: curve25519-sha256,ecdh-sha2-nistp256\n";
+
+    #[test]
+    fn no_common_algorithm_is_a_definite_no() {
+        assert_eq!(
+            classify_attempt("sntrup761x25519-sha512@openssh.com", NO_COMMON),
+            KexOutcome::NotNegotiable
+        );
     }
 }

@@ -685,11 +685,25 @@ fn print_ssh_dual(dual: &DualSshReport) {
                 dual.diff.only_experimental.len()
             );
             for n in &dual.diff.only_experimental {
+                let tested = if e_ver.contains(n) { "  [tested]" } else { "" };
                 match dual.diff.mainline_since.get(n) {
-                    Some(v) => println!("    + {}  (also in stock OpenSSH >= {})", n, v),
-                    None => println!("    + {}  (OQS-only)", n),
+                    Some(v) => println!("    + {}  (also in stock OpenSSH >= {}){}", n, v, tested),
+                    None => println!("    + {}  (OQS-only){}", n, tested),
                 }
             }
+            let total = dual.diff.only_experimental.len();
+            let tested = dual
+                .diff
+                .only_experimental
+                .iter()
+                .filter(|n| e_ver.contains(*n))
+                .count();
+            println!(
+                "    {} usable: {} handshake-tested, {} implemented by the client but untested.",
+                total,
+                tested,
+                total - tested
+            );
             let newer = dual.diff.mainline_since.len();
             let needed = dual
                 .diff
