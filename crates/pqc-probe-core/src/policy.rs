@@ -189,8 +189,15 @@ pub fn check_resolved(
     Ok(Target::new(host, port).with_resolved(first))
 }
 
-/// Resolve `host` to its IPv4 addresses (5 s limit).
+/// Resolve `host` to its IPv4 addresses. Each attempt has a 5 s limit and a failed or timed-out
+/// attempt is tried once more: on networks with broken IPv6 the first lookup of an uncached name
+/// can outlive the limit (getaddrinfo also waits for AAAA), while the retry finds the late answer
+/// in the resolver's cache.
 pub async fn resolve_ipv4(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, PolicyError> {
+    retry_lookup(2, || lookup_once(host, port)).await
+}
+
+async fn lookup_once(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, PolicyError> {
     let lookup = tokio::net::lookup_host((host, port));
     let found = tokio::time::timeout(Duration::from_secs(5), lookup)
         .await
@@ -207,6 +214,22 @@ pub async fn resolve_ipv4(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, Policy
     Ok(v4)
 }
 
+/// Run `f` up to `attempts` times, retrying only when it fails with `ResolveFailed`.
+async fn retry_lookup<F, Fut>(attempts: usize, mut f: F) -> Result<Vec<Ipv4Addr>, PolicyError>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<Vec<Ipv4Addr>, PolicyError>>,
+{
+    let mut last = None;
+    for _ in 0..attempts.max(1) {
+        match f().await {
+            Err(e @ PolicyError::ResolveFailed(..)) => last = Some(e),
+            other => return other,
+        }
+    }
+    Err(last.expect("at least one attempt was made"))
+}
+
 /// Validate, resolve once, check, and return a [`Target`] pinned to the checked address.
 pub async fn prepare_target(host: &str, port: u16, policy: &Policy) -> Result<Target, PolicyError> {
     validate_host(host)?;
@@ -221,6 +244,56 @@ mod policy_tests {
 
     fn ip(s: &str) -> Ipv4Addr {
         s.parse().unwrap()
+    }
+
+    fn failing() -> Result<Vec<Ipv4Addr>, PolicyError> {
+        Err(PolicyError::ResolveFailed(
+            "a.test".into(),
+            "timed out".into(),
+        ))
+    }
+
+    #[tokio::test]
+    async fn lookup_is_retried_once_after_a_failure() {
+        let calls = std::cell::Cell::new(0);
+        let r = retry_lookup(2, || {
+            calls.set(calls.get() + 1);
+            let first = calls.get() == 1;
+            async move {
+                if first {
+                    failing()
+                } else {
+                    Ok(vec![Ipv4Addr::new(93, 184, 216, 34)])
+                }
+            }
+        })
+        .await;
+        assert_eq!(r.unwrap(), vec![Ipv4Addr::new(93, 184, 216, 34)]);
+        assert_eq!(calls.get(), 2);
+    }
+
+    #[tokio::test]
+    async fn lookup_gives_up_after_the_last_attempt() {
+        let calls = std::cell::Cell::new(0);
+        let r = retry_lookup(2, || {
+            calls.set(calls.get() + 1);
+            async { failing() }
+        })
+        .await;
+        assert!(matches!(r, Err(PolicyError::ResolveFailed(..))));
+        assert_eq!(calls.get(), 2);
+    }
+
+    #[tokio::test]
+    async fn an_empty_answer_is_final_and_not_retried() {
+        let calls = std::cell::Cell::new(0);
+        let r = retry_lookup(2, || {
+            calls.set(calls.get() + 1);
+            async { Ok(vec![]) }
+        })
+        .await;
+        assert!(r.unwrap().is_empty());
+        assert_eq!(calls.get(), 1);
     }
 
     #[test]

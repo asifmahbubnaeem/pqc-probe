@@ -11,8 +11,9 @@ pub struct ProbeRequest {
     pub target: String,
     #[serde(default = "default_protocol")]
     pub protocol: ProtocolSelection,
-    #[serde(default = "default_mode")]
-    pub mode: ModeSelection,
+    /// Omitted: `both` when the server has the experimental stack, else `vanilla`.
+    #[serde(default)]
+    pub mode: Option<ModeSelection>,
     /// Overrides the TLS port (default: the port in `target`, else 443).
     #[serde(default)]
     pub tls_port: Option<u16>,
@@ -24,10 +25,6 @@ pub struct ProbeRequest {
 
 fn default_protocol() -> ProtocolSelection {
     ProtocolSelection::Tls
-}
-
-fn default_mode() -> ModeSelection {
-    ModeSelection::Both
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -83,7 +80,7 @@ mod tests {
     fn request_defaults_and_strictness() {
         let r: ProbeRequest = serde_json::from_str(r#"{"target":"example.com"}"#).unwrap();
         assert_eq!(r.protocol, ProtocolSelection::Tls);
-        assert_eq!(r.mode, ModeSelection::Both);
+        assert_eq!(r.mode, None);
         assert!(r.tls_port.is_none() && r.ssh_port.is_none());
         assert!(serde_json::from_str::<ProbeRequest>(r#"{"target":"a","extra":1}"#).is_err());
         assert!(

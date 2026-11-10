@@ -59,6 +59,10 @@ async fn meta(State(st): State<AppState>) -> Json<serde_json::Value> {
         "tool": { "name": "pqc-probe", "version": env!("CARGO_PKG_VERSION") },
         "schema_version": SCHEMA_VERSION,
         "allowed_ports": c.allowed_ports,
+        "modes": {
+            "tls": c.tools.available_modes(ProtocolSelection::Tls),
+            "ssh": c.tools.available_modes(ProtocolSelection::Ssh),
+        },
         "limits": {
             "max_concurrent": c.max_concurrent,
             "queue_limit": c.queue_limit,
@@ -121,6 +125,15 @@ async fn create_probe(
         req.protocol,
         ProtocolSelection::Ssh | ProtocolSelection::Both
     );
+    // Refuse a mode this server cannot run before spending any DNS or queue slot on it.
+    let mode = st
+        .config
+        .tools
+        .resolve_mode(req.protocol, req.mode)
+        .map_err(|m| {
+            ApiError::new(StatusCode::UNPROCESSABLE_ENTITY, "mode_unavailable", m)
+                .with_hint("See GET /api/v1/meta for the modes this server offers.")
+        })?;
     // The port written in `target` belongs to TLS, unless only SSH was asked for.
     let tls_port = want_tls.then(|| req.tls_port.or(port_in_target).unwrap_or(443));
     let ssh_port = want_ssh.then(|| {
@@ -142,6 +155,7 @@ async fn create_probe(
 
     let job = ProbeJob {
         request: req,
+        mode,
         tls,
         ssh,
     };
@@ -246,6 +260,11 @@ mod tests {
             queue_limit: 10,
             job_timeout: Duration::from_secs(5),
             result_ttl: Duration::from_secs(60),
+            tools: crate::config::ToolPaths {
+                openssl_oqs: Some("openssl-oqs".into()),
+                ssh_oqs: Some("ssh-oqs".into()),
+                ..Default::default()
+            },
             ..Config::default()
         }
     }
@@ -314,6 +333,33 @@ mod tests {
         assert_eq!(v["schema_version"], 1);
         assert_eq!(v["limits"]["max_concurrent"], 2);
         assert!(v["allowed_ports"].as_array().unwrap().contains(&json!(443)));
+    }
+
+    #[tokio::test]
+    async fn an_unavailable_mode_is_refused_with_422_and_the_default_degrades() {
+        // No experimental tools configured.
+        let cfg = Config {
+            tools: Default::default(),
+            ..small_config()
+        };
+        let app = router(state(cfg, FakeProber::ok()));
+        let (s, _, v) = send(
+            &app,
+            post_json(r#"{"target":"example.test","mode":"both"}"#),
+        )
+        .await;
+        assert_eq!(s, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(v["error"]["code"], "mode_unavailable");
+
+        let (s, _, v) = send(&app, post_json(r#"{"target":"example.test"}"#)).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let id = v["id"].as_str().unwrap().to_string();
+        wait_done(&app, &id).await;
+        let (_, _, report) = send(&app, get_req(&format!("/api/v1/probes/{id}/report"))).await;
+        assert_eq!(report["request"]["mode"], "vanilla");
+
+        let (_, _, meta) = send(&app, get_req("/api/v1/meta")).await;
+        assert_eq!(meta["modes"]["tls"], json!(["vanilla"]));
     }
 
     #[tokio::test]

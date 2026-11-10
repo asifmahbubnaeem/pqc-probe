@@ -82,12 +82,22 @@ impl From<PolicyError> for ApiError {
                 format!("port {port} is not allowed on this service"),
             )
             .with_hint(format!("Allowed ports: {allowed}")),
-            PolicyError::NoAddress(_) | PolicyError::ResolveFailed(..) => Self::new(
+            PolicyError::NoAddress(_) => Self::new(
                 StatusCode::BAD_REQUEST,
                 "unresolvable_target",
-                "the target host name did not resolve to an IPv4 address",
+                "the target host name has no IPv4 address",
             )
-            .with_hint("Check the spelling; only IPv4 targets are supported."),
+            .with_hint("Only IPv4 targets are supported."),
+            // The detail (resolver errors can name internal DNS servers) goes to the log only.
+            PolicyError::ResolveFailed(host, why) => {
+                tracing::warn!(%host, %why, "DNS lookup failed");
+                Self::new(
+                    StatusCode::BAD_REQUEST,
+                    "unresolvable_target",
+                    "the DNS lookup for the target failed or timed out",
+                )
+                .with_hint("Check the spelling, or try again in a moment.")
+            }
             // Deliberately does not echo the resolved address: for split-horizon DNS that would
             // tell the caller about internal addressing.
             PolicyError::BlockedAddress { reason, .. } => Self::new(
@@ -115,5 +125,25 @@ impl IntoResponse for ApiError {
                 .insert(header::RETRY_AFTER, HeaderValue::from(secs));
         }
         resp
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lookup_failure_and_missing_ipv4_are_told_apart() {
+        let none: ApiError = PolicyError::NoAddress("a.test".into()).into();
+        let failed: ApiError =
+            PolicyError::ResolveFailed("a.test".into(), "internal-dns.corp refused".into()).into();
+        assert_eq!(none.code, "unresolvable_target");
+        assert_eq!(failed.code, "unresolvable_target");
+        assert!(none.message.contains("no IPv4"));
+        assert!(failed.message.contains("failed or timed out"));
+        assert!(
+            !failed.message.contains("internal-dns"),
+            "resolver detail must not leak"
+        );
     }
 }

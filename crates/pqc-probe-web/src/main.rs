@@ -2,7 +2,7 @@
 //! (see `docs/web.md`).
 
 use anyhow::Result;
-use pqc_probe_web::prober::{NotWiredProber, SystemResolver};
+use pqc_probe_web::prober::{CliProber, SystemResolver};
 use pqc_probe_web::{router, AppState, Config, JobStore};
 use std::sync::Arc;
 use tracing_subscriber::EnvFilter;
@@ -20,11 +20,11 @@ async fn main() -> Result<()> {
     store.spawn_sweeper();
 
     let bind = config.bind;
+    let prober = CliProber::new(config.tools.clone(), config.probe_timeout);
     let state = AppState {
         config: Arc::new(config),
         store,
-        // The real prober is wired in the next step; until then every job fails clearly.
-        prober: Arc::new(NotWiredProber),
+        prober: Arc::new(prober),
         resolver: Arc::new(SystemResolver),
     };
 

@@ -82,7 +82,7 @@ fn report_for(job: &ProbeJob) -> Report {
         },
         RequestInfo {
             protocol: job.request.protocol,
-            mode: job.request.mode,
+            mode: job.mode,
         },
     )
 }
@@ -109,10 +109,11 @@ pub fn job(host: &str) -> ProbeJob {
         request: ProbeRequest {
             target: host.to_string(),
             protocol: ProtocolSelection::Tls,
-            mode: ModeSelection::Both,
+            mode: None,
             tls_port: None,
             ssh_port: None,
         },
+        mode: ModeSelection::Both,
         tls: Some(Target::new(host, 443)),
         ssh: None,
     }
