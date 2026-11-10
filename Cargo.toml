@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/pqc-probe-core",
     "crates/pqc-probe-cli",
+    "crates/pqc-probe-web",
 ]
 
 [workspace.package]

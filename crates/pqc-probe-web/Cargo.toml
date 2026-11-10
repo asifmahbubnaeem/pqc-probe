@@ -1,0 +1,30 @@
+[package]
+name = "pqc-probe-web"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Web service for pqc-probe: submit a target, poll the job, fetch the JSON report"
+
+[lib]
+name = "pqc_probe_web"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pqc-probe-web"
+path = "src/main.rs"
+
+[dependencies]
+pqc-probe-core = { path = "../pqc-probe-core" }
+anyhow.workspace = true
+axum = "0.8"
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
