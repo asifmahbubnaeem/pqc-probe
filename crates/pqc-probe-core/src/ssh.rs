@@ -1,9 +1,9 @@
 //! SSH probing: shells out to `ssh -vv` and parses the KEX negotiation.
 //!
-//! Technique: probe the server's offer list in ONE connection by requesting a
-//! KEX name the server can't match. OpenSSH prints "Their offer: X,Y,Z" when
-//! it can't find a mutually-supported algorithm. That gives us the full server
-//! offer in ~2 seconds, no per-algorithm probing needed.
+//! Technique: read the server's KEXINIT packet directly (see `kexinit`) for its full offer,
+//! then try each offered algorithm with the real ssh client. The old method (a KEX name the
+//! server can't match, parsing OpenSSH's "Their offer: X,Y,Z") remains only as a fallback,
+//! because OpenSSH truncates that log line at about 1 KB.
 //!
 //! For dual-mode (mainline vs OQS-OpenSSH client), we run the probe twice —
 //! once with each client — and compare which algorithms each client can
@@ -85,17 +85,31 @@ pub struct SshKexDiff {
 ///   1. One ssh call with a nonexistent KEX name → parse "Their offer:" for the full server offer.
 ///   2. For each entry in the offer, try to negotiate it with this client → see which succeed.
 pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshReport, ProbeError> {
-    // Phase 1: enumerate server's offer.
-    let enum_output = run_ssh(
-        &opts.ssh_path,
-        target,
-        opts.timeout,
-        "diffie-hellman-group1-sha1",
-    )
-    .await?;
-
-    let server_offered_kex = parse_server_offer(&enum_output);
-    let server_version = parse_server_version(&enum_output);
+    // Phase 1: enumerate the server's offer by reading its KEXINIT off the wire (complete list,
+    // no dependence on this client's debug output). If that fails, fall back to scraping
+    // "Their offer:" from ssh -- which OpenSSH truncates at about 1 KB.
+    let (server_offered_kex, server_version) =
+        match crate::kexinit::read_server_kexinit(target, opts.timeout).await {
+            Ok(k) => (k.kex_algorithms, k.software_version),
+            Err(native_err) => {
+                let out = run_ssh(
+                    &opts.ssh_path,
+                    target,
+                    opts.timeout,
+                    "diffie-hellman-group1-sha1",
+                )
+                .await?;
+                let offer = parse_server_offer(&out);
+                if offer.is_empty() {
+                    return Err(ProbeError::Protocol(format!(
+                        "could not read the server's key-exchange offer \
+                         (direct read: {native_err}; ssh said: {})",
+                        diagnostic_line(&out)
+                    )));
+                }
+                (offer, parse_server_version(&out))
+            }
+        };
     let client_version = detect_client_version(&opts.ssh_path).await;
 
     // Phase 2: for each offered KEX, try to negotiate with this client.
@@ -302,6 +316,18 @@ async fn detect_client_version(path: &str) -> Option<String> {
     ))
 }
 
+/// The most informative single line of ssh's output for an error message: the last non-empty
+/// line, trimmed and capped so a hostile server cannot flood a report.
+fn diagnostic_line(text: &str) -> String {
+    let line = text
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .unwrap_or("no output");
+    line.chars().take(200).collect()
+}
+
 /// Parse the server's offered KEX list from "Their offer: X,Y,Z" line.
 fn parse_server_offer(text: &str) -> Vec<String> {
     text.lines()
@@ -504,5 +530,46 @@ mod ssh_hardening_tests {
     fn default_parallelism_is_bounded() {
         let o = SshProbeOptions::default();
         assert!(o.max_parallel >= 1 && o.max_parallel <= 8);
+    }
+}
+
+#[cfg(test)]
+mod unreadable_offer_tests {
+    use super::*;
+
+    #[test]
+    fn diagnostic_line_is_last_nonempty_and_capped() {
+        assert_eq!(diagnostic_line(""), "no output");
+        assert_eq!(diagnostic_line("a\nb\n\n  \n"), "b");
+        assert_eq!(diagnostic_line(&"x".repeat(500)).len(), 200);
+    }
+
+    /// Regression: a server that accepts then hangs up used to yield an empty offer and a
+    /// report saying both clients "negotiate identically". It must be an error instead.
+    #[tokio::test]
+    async fn server_that_hangs_up_is_an_error_not_an_empty_success() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            loop {
+                let Ok((sock, _)) = listener.accept().await else {
+                    break;
+                };
+                drop(sock);
+            }
+        });
+        let opts = SshProbeOptions {
+            timeout: Duration::from_secs(5),
+            ssh_path: "false".to_string(),
+            ..SshProbeOptions::default()
+        };
+        let err = probe_ssh(&Target::new("127.0.0.1", port), &opts)
+            .await
+            .unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("could not read the server's key-exchange offer"),
+            "{err}"
+        );
     }
 }

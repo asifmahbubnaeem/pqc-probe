@@ -449,13 +449,21 @@
             }
           ],
           "description": "Result with the stock client; null if not requested or failed (see `errors`)."
+        },
+        "vanilla_pq_capable": {
+          "description": "True if the stock client itself completed a handshake with a post-quantum group (e.g.\nOpenSSL >= 3.5). Then the vanilla-vs-experimental diff is not informative about the\nserver. Null if the stock client was not run or failed.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "required": [
         "diff",
         "errors",
         "experimental",
-        "vanilla"
+        "vanilla",
+        "vanilla_pq_capable"
       ],
       "type": "object"
     },

@@ -117,6 +117,16 @@ async fn main() -> Result<()> {
     }
 }
 
+/// A bare host (no `:port`) gets the protocol's default port: 22 for ssh-only, else 443.
+/// Anything containing a colon is left alone so `Target::parse` can validate it.
+fn with_default_port(s: &str, ssh_only: bool) -> String {
+    if s.contains(':') {
+        s.to_string()
+    } else {
+        format!("{}:{}", s, if ssh_only { 22 } else { 443 })
+    }
+}
+
 async fn run_probe(
     target_str: String,
     mode: Mode,
@@ -126,7 +136,11 @@ async fn run_probe(
     tls_port: Option<u16>,
     ssh_port: Option<u16>,
 ) -> Result<()> {
-    let target = Target::parse(&target_str).context("parsing target")?;
+    let target = Target::parse(&with_default_port(
+        &target_str,
+        matches!(protocol, Protocol::Ssh),
+    ))
+    .context("parsing target")?;
 
     let want_tls = matches!(protocol, Protocol::Tls | Protocol::Both);
     let want_ssh = matches!(protocol, Protocol::Ssh | Protocol::Both);
@@ -439,6 +453,17 @@ fn print_tls_dual(dual: &DualProbeReport) {
         println!("  Not available: one or both TLS probes failed (see above).");
     } else if dual.diff.only_experimental.is_empty() && dual.diff.only_vanilla.is_empty() {
         println!("  No TLS algorithms unlocked by oqs-provider on this target.");
+        if dual
+            .vanilla
+            .as_ref()
+            .and_then(|r| r.tls.as_ref())
+            .is_some_and(pqc_probe_core::has_pq_group)
+        {
+            println!(
+                "  Note: the vanilla client already negotiates post-quantum groups (OpenSSL >= 3.5),"
+            );
+            println!("  so this diff cannot show what the server supports beyond stock PQ.");
+        }
     } else {
         if !dual.diff.only_experimental.is_empty() {
             println!(
@@ -553,8 +578,15 @@ fn print_ssh_dual(dual: &DualSshReport) {
     println!("  OQS-OpenSSH:  {}", e_ssh.unwrap_or("unknown"));
     println!();
     println!("SSH KEX (server offer × client support):");
+    let name_w = server_offered
+        .iter()
+        .filter(|k| !is_ssh_protocol_marker(k))
+        .map(|k| k.len())
+        .max()
+        .unwrap_or(0)
+        .max("server offers".len());
     println!(
-        "  {:<40}  {:<16}  {:<16}",
+        "  {:<name_w$}  {:<16}  {:<16}",
         "server offers", "mainline ssh", "OQS-OpenSSH"
     );
     for k in &server_offered {
@@ -563,7 +595,7 @@ fn print_ssh_dual(dual: &DualSshReport) {
         }
         let v = if v_set.contains(k) { "ok" } else { "-" };
         let e = if e_set.contains(k) { "ok" } else { "-" };
-        println!("  {:<40}  {:<16}  {:<16}", k, v, e);
+        println!("  {:<name_w$}  {:<16}  {:<16}", k, v, e);
     }
 
     println!();
@@ -716,6 +748,17 @@ fn is_ssh_protocol_marker(name: &str) -> bool {
 #[cfg(test)]
 mod cli_tests {
     use super::*;
+
+    #[test]
+    fn bare_host_gets_default_port() {
+        assert_eq!(with_default_port("github.com", false), "github.com:443");
+        assert_eq!(with_default_port("github.com", true), "github.com:22");
+        assert_eq!(
+            with_default_port("github.com:2222", false),
+            "github.com:2222"
+        );
+        assert_eq!(with_default_port("host:notaport", false), "host:notaport");
+    }
 
     #[test]
     fn cli_choices_map_to_report_enums() {

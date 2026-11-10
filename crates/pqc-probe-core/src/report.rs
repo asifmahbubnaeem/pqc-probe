@@ -96,6 +96,10 @@ pub struct TlsSection {
     pub experimental: Option<TlsReport>,
     /// Difference between the two; null unless both sides produced a result.
     pub diff: Option<KemDiff>,
+    /// True if the stock client itself completed a handshake with a post-quantum group (e.g.
+    /// OpenSSL >= 3.5). Then the vanilla-vs-experimental diff is not informative about the
+    /// server. Null if the stock client was not run or failed.
+    pub vanilla_pq_capable: Option<bool>,
     pub errors: SideErrors,
 }
 
@@ -139,6 +143,11 @@ impl TlsSection {
     /// A single-stack run: `is_experimental` says which side the result belongs to.
     pub fn from_single(is_experimental: bool, report: ProbeReport) -> Self {
         let result = report.tls;
+        let vanilla_pq_capable = if is_experimental {
+            None
+        } else {
+            result.as_ref().map(crate::has_pq_group)
+        };
         let (vanilla, experimental) = if is_experimental {
             (None, result)
         } else {
@@ -148,13 +157,20 @@ impl TlsSection {
             vanilla,
             experimental,
             diff: None,
+            vanilla_pq_capable,
             errors: SideErrors::default(),
         }
     }
 
     pub fn from_dual(d: DualProbeReport) -> Self {
         let both = d.vanilla.is_some() && d.experimental.is_some();
+        let vanilla_pq_capable = d
+            .vanilla
+            .as_ref()
+            .and_then(|r| r.tls.as_ref())
+            .map(crate::has_pq_group);
         Self {
+            vanilla_pq_capable,
             vanilla: d.vanilla.and_then(|r| r.tls),
             experimental: d.experimental.and_then(|r| r.tls),
             diff: both.then_some(d.diff),

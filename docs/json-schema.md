@@ -32,6 +32,9 @@ document. Other tools (for example the planned Migration Dashboard) depend on it
 - `vanilla` / `experimental` are `null` when that stack was not requested **or** its probe failed;
   a failure says why in `errors`.
 - `diff` is `null` unless both sides produced a result.
+- `tls.vanilla_pq_capable` is `true` when the stock OpenSSL client itself completed a post-quantum
+  handshake (OpenSSL 3.5 or newer). The vanilla-vs-experimental TLS diff then says little about the
+  server. It is `null` when the stock client did not run or failed.
 - Every key is always present. `null` means "not applicable, not run, or failed" and never
   "unknown, assume nothing happened": check `errors`.
 - `request.protocol`: `tls | ssh | both`. `request.mode`: `vanilla | experimental | both`.

@@ -5,6 +5,7 @@
 //! group, run in parallel); dual mode diffs vanilla OpenSSL against
 //! OpenSSL + oqs-provider. SSH probing lives in [`ssh`].
 
+pub mod kexinit;
 pub mod policy;
 pub mod report;
 pub mod ssh;
@@ -142,6 +143,8 @@ pub enum ProbeError {
     SpawnFailed(#[from] std::io::Error),
     #[error("probe timed out")]
     Timeout,
+    #[error("ssh protocol error: {0}")]
+    Protocol(String),
 }
 
 /// Probe a target.
@@ -333,6 +336,22 @@ pub struct CertInfo {
 }
 
 /// True if an algorithm / key-type name is a post-quantum signature scheme.
+/// True for TLS group names that contain a post-quantum KEM (ML-KEM, Kyber, Frodo, ...).
+pub fn is_pq_group_name(name: &str) -> bool {
+    let n = name.to_ascii_lowercase();
+    ["mlkem", "kyber", "frodo", "bike", "hqc", "sntrup"]
+        .iter()
+        .any(|p| n.contains(p))
+}
+
+/// True if this client completed a handshake using at least one post-quantum group, i.e. the
+/// "vanilla" stack is already PQ-capable and a vanilla-vs-experimental TLS diff says little.
+pub fn has_pq_group(r: &TlsReport) -> bool {
+    r.kems_tried
+        .iter()
+        .any(|k| k.handshake_succeeded && is_pq_group_name(&k.offered))
+}
+
 pub fn is_pq_signature_name(name: &str) -> bool {
     let n = name.to_ascii_uppercase();
     [
@@ -1157,6 +1176,43 @@ mod version_tests {
 #[cfg(test)]
 mod target_tests {
     use super::*;
+
+    fn kem(name: &str, ok: bool) -> KemResult {
+        KemResult {
+            offered: name.to_string(),
+            negotiated: ok.then(|| name.to_string()),
+            handshake_succeeded: ok,
+        }
+    }
+
+    #[test]
+    fn pq_group_names() {
+        assert!(is_pq_group_name("X25519MLKEM768"));
+        assert!(is_pq_group_name("SecP384r1MLKEM1024"));
+        assert!(is_pq_group_name("x25519_kyber768"));
+        assert!(!is_pq_group_name("X25519"));
+        assert!(!is_pq_group_name("P-384"));
+    }
+
+    fn tls_report(kems: Vec<KemResult>) -> TlsReport {
+        TlsReport {
+            protocol_version: None,
+            cipher: None,
+            kems_tried: kems,
+            cert_sig_alg: None,
+            peer_sig_alg: None,
+            cert_chain: Vec::new(),
+            openssl_version: None,
+        }
+    }
+
+    #[test]
+    fn has_pq_group_needs_a_successful_pq_handshake() {
+        let r = tls_report(vec![kem("X25519", true), kem("X25519MLKEM768", false)]);
+        assert!(!has_pq_group(&r));
+        let r = tls_report(vec![kem("X25519", true), kem("X25519MLKEM768", true)]);
+        assert!(has_pq_group(&r));
+    }
 
     #[test]
     fn connect_host_prefers_resolved_address() {
