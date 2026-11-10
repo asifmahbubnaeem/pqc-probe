@@ -35,6 +35,9 @@ document. Other tools (for example the planned Migration Dashboard) depend on it
 - `tls.vanilla_pq_capable` is `true` when the stock OpenSSL client itself completed a post-quantum
   handshake (OpenSSL 3.5 or newer). The vanilla-vs-experimental TLS diff then says little about the
   server. It is `null` when the stock client did not run or failed.
+- `ssh.*.client_inconclusive` lists offered algorithms a client could not be tested on (timeout or
+  dropped connection, even after one retry). They are neither supported nor unsupported and are
+  excluded from `ssh.diff`. `client_can_negotiate` means the key exchange completed.
 - Every key is always present. `null` means "not applicable, not run, or failed" and never
   "unknown, assume nothing happened": check `errors`.
 - `request.protocol`: `tls | ssh | both`. `request.mode`: `vanilla | experimental | both`.

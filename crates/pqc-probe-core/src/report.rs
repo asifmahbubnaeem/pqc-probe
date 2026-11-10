@@ -126,6 +126,10 @@ pub struct SshClientResult {
     pub server_offered_kex: Vec<String>,
     /// The subset of the server's offer that this client negotiated successfully.
     pub client_can_negotiate: Vec<String>,
+    /// Offered algorithms this client could not be tested on (timeouts, dropped connections)
+    /// even after a retry. They are left out of the diff.
+    #[serde(default)]
+    pub client_inconclusive: Vec<String>,
 }
 
 impl From<SshReport> for SshClientResult {
@@ -135,6 +139,7 @@ impl From<SshReport> for SshClientResult {
             server_version: r.server_version,
             server_offered_kex: r.server_offered_kex,
             client_can_negotiate: r.client_can_negotiate,
+            client_inconclusive: r.client_inconclusive,
         }
     }
 }
@@ -429,6 +434,7 @@ mod report_tests {
             server_version: Some("OpenSSH_9.6".into()),
             server_offered_kex: vec!["curve25519-sha256".into()],
             client_can_negotiate: vec!["curve25519-sha256".into()],
+            client_inconclusive: vec![],
             client_version: Some(version.into()),
         };
         let dual = DualSshReport {

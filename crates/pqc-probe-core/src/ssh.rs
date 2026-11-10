@@ -13,6 +13,7 @@ use crate::{ProbeError, Target};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
+use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::process::Command;
 
 /// Options for SSH probing.
@@ -45,6 +46,10 @@ pub struct SshReport {
     pub server_offered_kex: Vec<String>,
     /// Of the server's offer, which ones this client can actually negotiate.
     pub client_can_negotiate: Vec<String>,
+    /// Offered algorithms this client could not be tested on (timeouts, dropped connections),
+    /// even after a retry. Neither "supported" nor "unsupported": left out of the diff.
+    #[serde(default)]
+    pub client_inconclusive: Vec<String>,
     /// First line of `ssh -V` for this client, e.g.
     /// "OpenSSH_9.6p1 Ubuntu-3ubuntu13.20, OpenSSL 3.5.2 5 Aug 2025".
     #[serde(default)]
@@ -116,7 +121,7 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
     // Run in parallel to keep the whole probe fast.
     let limiter = std::sync::Arc::new(tokio::sync::Semaphore::new(opts.max_parallel.max(1)));
     let mut handles = Vec::with_capacity(server_offered_kex.len());
-    for kex in &server_offered_kex {
+    for kex in server_offered_kex.iter().filter(|k| !is_protocol_marker(k)) {
         let limiter = std::sync::Arc::clone(&limiter);
         let kex = kex.clone();
         let ssh_path = opts.ssh_path.clone();
@@ -124,28 +129,31 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
         let timeout = opts.timeout;
         handles.push(tokio::spawn(async move {
             let _permit = limiter.acquire_owned().await.ok()?;
-            let output = run_ssh(&ssh_path, &target, timeout, &kex).await.ok()?;
-            if negotiated_kex(&output).as_deref() == Some(kex.as_str()) {
-                Some(kex)
-            } else {
-                None
-            }
+            let outcome = try_kex(&ssh_path, &target, timeout, &kex).await;
+            Some((kex, outcome))
         }));
     }
 
     let mut client_can_negotiate = Vec::new();
+    let mut client_inconclusive = Vec::new();
     for h in handles {
-        if let Ok(Some(kex)) = h.await {
-            client_can_negotiate.push(kex);
+        if let Ok(Some((kex, outcome))) = h.await {
+            match outcome {
+                KexOutcome::Negotiated => client_can_negotiate.push(kex),
+                KexOutcome::Inconclusive => client_inconclusive.push(kex),
+                KexOutcome::NotNegotiable => {}
+            }
         }
     }
     client_can_negotiate.sort();
+    client_inconclusive.sort();
 
     Ok(SshReport {
         target: target.clone(),
         server_version,
         server_offered_kex,
         client_can_negotiate,
+        client_inconclusive,
         client_version,
     })
 }
@@ -173,8 +181,19 @@ pub async fn probe_ssh_dual(
         .map(|r| r.client_can_negotiate.iter().cloned().collect())
         .unwrap_or_default();
 
-    let mut only_experimental: Vec<String> = e_set.difference(&v_set).cloned().collect();
-    let mut only_vanilla: Vec<String> = v_set.difference(&e_set).cloned().collect();
+    // An algorithm one side could not be tested on is left out of the diff, not guessed.
+    let v_inc = inconclusive_set(vanilla.as_ref());
+    let e_inc = inconclusive_set(experimental.as_ref());
+    let mut only_experimental: Vec<String> = e_set
+        .difference(&v_set)
+        .filter(|k| !v_inc.contains(*k))
+        .cloned()
+        .collect();
+    let mut only_vanilla: Vec<String> = v_set
+        .difference(&e_set)
+        .filter(|k| !e_inc.contains(*k))
+        .cloned()
+        .collect();
     let mut in_both: Vec<String> = e_set.intersection(&v_set).cloned().collect();
     only_experimental.sort();
     only_vanilla.sort();
@@ -256,6 +275,128 @@ async fn run_ssh(
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     ))
+}
+
+/// Result of trying one KEX algorithm with one ssh client.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum KexOutcome {
+    /// The key exchange completed (`SSH2_MSG_NEWKEYS received`).
+    Negotiated,
+    /// A definite no: the client does not know the algorithm, or the exchange failed on the
+    /// client side after both agreed on the name.
+    NotNegotiable,
+    /// No answer: timeout, refused/dropped connection, or output we do not recognise.
+    Inconclusive,
+}
+
+/// Protocol markers in the KEXINIT list (`kex-strict-*`, `ext-info-*`) are not algorithms.
+pub fn is_protocol_marker(name: &str) -> bool {
+    name.starts_with("kex-strict-") || name.starts_with("ext-info-")
+}
+
+fn inconclusive_set(r: Option<&SshReport>) -> HashSet<String> {
+    r.map(|r| r.client_inconclusive.iter().cloned().collect())
+        .unwrap_or_default()
+}
+
+/// Stop reading once an attempt's outcome is known, so the auth phase (4-5 s against some
+/// servers) and the rest of the connection are never waited for.
+const MAX_ATTEMPT_LOG: usize = 256 * 1024;
+
+/// Decide the outcome from the ssh -vv stderr collected so far.
+///
+/// Matched against real logs: success is `kex: algorithm: <name>` followed by
+/// `SSH2_MSG_NEWKEYS received`; a client that lacks the algorithm prints
+/// `Unsupported KEX algorithm` / `Bad SSH2 KexAlgorithms`; a client-side failure after the
+/// name was agreed prints `ssh_dispatch_run_fatal` (e.g. "memory allocation failed" for very
+/// large Classic McEliece keys). Network trouble is deliberately NOT a definite no.
+fn classify_attempt(kex: &str, text: &str) -> KexOutcome {
+    let agreed = negotiated_kex(text).as_deref() == Some(kex);
+    if agreed && text.contains("SSH2_MSG_NEWKEYS received") {
+        return KexOutcome::Negotiated;
+    }
+    if text.contains("Unsupported KEX algorithm") || text.contains("Bad SSH2 KexAlgorithms") {
+        return KexOutcome::NotNegotiable;
+    }
+    let network_trouble = [
+        "Connection reset",
+        "Connection closed",
+        "Broken pipe",
+        "timed out",
+    ]
+    .iter()
+    .any(|m| text.contains(m));
+    if agreed && text.contains("ssh_dispatch_run_fatal") && !network_trouble {
+        return KexOutcome::NotNegotiable;
+    }
+    KexOutcome::Inconclusive
+}
+
+/// Read ssh's stderr until the outcome is visible (NEWKEYS received, or a fatal error), EOF,
+/// or the log gets too large. The reader may stay open: we never wait for the process to exit.
+async fn collect_attempt_log<R: AsyncRead + Unpin>(
+    reader: R,
+    text: &mut String,
+) -> std::io::Result<()> {
+    let mut reader = BufReader::new(reader);
+    let mut buf = Vec::new();
+    loop {
+        buf.clear();
+        if reader.read_until(b'\n', &mut buf).await? == 0 {
+            return Ok(());
+        }
+        let line = String::from_utf8_lossy(&buf);
+        text.push_str(&line);
+        if line.contains("SSH2_MSG_NEWKEYS received")
+            || line.contains("ssh_dispatch_run_fatal")
+            || text.len() > MAX_ATTEMPT_LOG
+        {
+            return Ok(());
+        }
+    }
+}
+
+/// One attempt: run ssh with a single forced KEX, return what it logged before the outcome
+/// was known (or before `timeout`), then kill it.
+async fn run_ssh_attempt(
+    ssh_path: &str,
+    target: &Target,
+    timeout: Duration,
+    kex: &str,
+) -> Result<String, ProbeError> {
+    let mut child = Command::new(ssh_path)
+        .args(ssh_args(&target.connect_host(), target.port, kex))
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| ProbeError::Protocol("ssh stderr was not captured".into()))?;
+    let mut text = String::new();
+    // Timeout or read error: keep whatever was collected; the classifier decides.
+    let _ = tokio::time::timeout(timeout, collect_attempt_log(stderr, &mut text)).await;
+    let _ = child.kill().await;
+    let _ = child.wait().await;
+    Ok(text)
+}
+
+/// Try one algorithm; an inconclusive first answer gets one retry after a short pause.
+async fn try_kex(ssh_path: &str, target: &Target, timeout: Duration, kex: &str) -> KexOutcome {
+    for attempt in 0..2 {
+        if attempt > 0 {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+        }
+        if let Ok(text) = run_ssh_attempt(ssh_path, target, timeout, kex).await {
+            let outcome = classify_attempt(kex, &text);
+            if outcome != KexOutcome::Inconclusive {
+                return outcome;
+            }
+        }
+    }
+    KexOutcome::Inconclusive
 }
 
 /// Parse the OpenSSH (major, minor) out of `ssh -V` output.
@@ -418,6 +559,7 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
             server_version: None,
             server_offered_kex: vec![],
             client_can_negotiate: vec!["curve25519-sha256".into(), "mlkem768x25519-sha256".into()],
+            client_inconclusive: vec![],
             client_version: None,
         };
         let e = SshReport {
@@ -429,6 +571,7 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
                 "mlkem768x25519-sha256".into(),
                 "sntrup761x25519-sha512@openssh.com".into(),
             ],
+            client_inconclusive: vec![],
             client_version: None,
         };
 
@@ -571,5 +714,144 @@ mod unreadable_offer_tests {
                 .contains("could not read the server's key-exchange offer"),
             "{err}"
         );
+    }
+}
+
+#[cfg(test)]
+mod attempt_tests {
+    use super::*;
+    use tokio::io::AsyncWriteExt;
+
+    // Real `ssh -vv` fragments, captured against the OQS test bench.
+    const SUCCESS: &str = "debug1: kex: algorithm: ecdh-sha2-nistp256\ndebug1: kex: host key algorithm: ssh-ed25519\ndebug1: expecting SSH2_MSG_KEX_ECDH_REPLY\ndebug1: SSH2_MSG_KEX_ECDH_REPLY received\ndebug1: SSH2_MSG_NEWKEYS sent\ndebug1: expecting SSH2_MSG_NEWKEYS\ndebug1: SSH2_MSG_NEWKEYS received\n";
+    const MCELIECE_FATAL: &str = "debug1: kex: algorithm: classic-mceliece-460896-sha512\ndebug1: kex: host key algorithm: ssh-ed25519\nssh_dispatch_run_fatal: Connection to 16.174.45.162 port 2222: memory allocation failed\n";
+    const CLIENT_LACKS_IT: &str = "Unsupported KEX algorithm \"kyber-768-sha384\"\ncommand-line line 0: Bad SSH2 KexAlgorithms 'kyber-768-sha384'.\n";
+    const REFUSED: &str = "debug1: connect to address 127.0.0.1 port 1: Connection refused\nssh: connect to host 127.0.0.1 port 1: Connection refused\n";
+    const TIMED_OUT: &str = "debug1: connect to address 16.174.45.162 port 2222: Connection timed out\nssh: connect to host 16.174.45.162 port 2222: Connection timed out\n";
+
+    #[test]
+    fn completed_exchange_is_negotiated() {
+        assert_eq!(
+            classify_attempt("ecdh-sha2-nistp256", SUCCESS),
+            KexOutcome::Negotiated
+        );
+    }
+
+    #[test]
+    fn newkeys_for_a_different_algorithm_does_not_count() {
+        assert_eq!(
+            classify_attempt("curve25519-sha256", SUCCESS),
+            KexOutcome::Inconclusive
+        );
+    }
+
+    #[test]
+    fn name_agreement_alone_is_not_success() {
+        let log = "debug1: kex: algorithm: ecdh-sha2-nistp256\ndebug1: expecting SSH2_MSG_KEX_ECDH_REPLY\n";
+        assert_eq!(
+            classify_attempt("ecdh-sha2-nistp256", log),
+            KexOutcome::Inconclusive
+        );
+    }
+
+    #[test]
+    fn client_side_failure_after_agreement_is_a_definite_no() {
+        assert_eq!(
+            classify_attempt("classic-mceliece-460896-sha512", MCELIECE_FATAL),
+            KexOutcome::NotNegotiable
+        );
+    }
+
+    #[test]
+    fn client_without_the_algorithm_is_a_definite_no() {
+        assert_eq!(
+            classify_attempt("kyber-768-sha384", CLIENT_LACKS_IT),
+            KexOutcome::NotNegotiable
+        );
+    }
+
+    #[test]
+    fn network_trouble_is_never_a_definite_no() {
+        for log in [REFUSED, TIMED_OUT, ""] {
+            assert_eq!(
+                classify_attempt("curve25519-sha256", log),
+                KexOutcome::Inconclusive
+            );
+        }
+        let dropped = "debug1: kex: algorithm: curve25519-sha256\nssh_dispatch_run_fatal: Connection to 1.2.3.4 port 22: Connection reset by peer\n";
+        assert_eq!(
+            classify_attempt("curve25519-sha256", dropped),
+            KexOutcome::Inconclusive
+        );
+    }
+
+    #[test]
+    fn protocol_markers_are_not_algorithms() {
+        assert!(is_protocol_marker("kex-strict-s-v00@openssh.com"));
+        assert!(is_protocol_marker("ext-info-s"));
+        assert!(!is_protocol_marker("curve25519-sha256"));
+    }
+
+    #[tokio::test]
+    async fn log_collection_stops_at_newkeys_without_waiting_for_eof() {
+        let (mut tx, rx) = tokio::io::duplex(4096);
+        tx.write_all(SUCCESS.as_bytes()).await.unwrap();
+        // tx stays open: if we waited for EOF this would hit the 2 s guard and fail.
+        let mut text = String::new();
+        tokio::time::timeout(Duration::from_secs(2), collect_attempt_log(rx, &mut text))
+            .await
+            .expect("must stop at NEWKEYS without EOF")
+            .unwrap();
+        assert!(text.ends_with("SSH2_MSG_NEWKEYS received\n"));
+        drop(tx);
+    }
+
+    #[tokio::test]
+    async fn log_collection_stops_at_a_fatal_error() {
+        let (mut tx, rx) = tokio::io::duplex(4096);
+        tx.write_all(MCELIECE_FATAL.as_bytes()).await.unwrap();
+        let mut text = String::new();
+        tokio::time::timeout(Duration::from_secs(2), collect_attempt_log(rx, &mut text))
+            .await
+            .expect("must stop at the fatal line")
+            .unwrap();
+        assert_eq!(
+            classify_attempt("classic-mceliece-460896-sha512", &text),
+            KexOutcome::NotNegotiable
+        );
+        drop(tx);
+    }
+
+    #[tokio::test]
+    async fn log_collection_ends_at_eof() {
+        let (mut tx, rx) = tokio::io::duplex(4096);
+        tx.write_all(REFUSED.as_bytes()).await.unwrap();
+        drop(tx);
+        let mut text = String::new();
+        collect_attempt_log(rx, &mut text).await.unwrap();
+        assert_eq!(text, REFUSED);
+    }
+
+    #[test]
+    fn inconclusive_algorithms_are_left_out_of_the_diff() {
+        let report = |can: &[&str], inc: &[&str]| SshReport {
+            target: Target::new("example.com", 22),
+            server_version: None,
+            server_offered_kex: vec![],
+            client_can_negotiate: can.iter().map(|s| s.to_string()).collect(),
+            client_inconclusive: inc.iter().map(|s| s.to_string()).collect(),
+            client_version: None,
+        };
+        let v = report(&["a"], &["b"]);
+        let e = report(&["a", "b", "c"], &["d"]);
+        let v_set: HashSet<String> = v.client_can_negotiate.iter().cloned().collect();
+        let e_set: HashSet<String> = e.client_can_negotiate.iter().cloned().collect();
+        let v_inc = inconclusive_set(Some(&v));
+        let only_e: Vec<&String> = e_set
+            .difference(&v_set)
+            .filter(|k| !v_inc.contains(*k))
+            .collect();
+        // "b" is only on the experimental side, but vanilla could not be tested on it.
+        assert_eq!(only_e, vec![&"c".to_string()]);
     }
 }

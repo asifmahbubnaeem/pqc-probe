@@ -554,6 +554,16 @@ fn print_ssh_dual(dual: &DualSshReport) {
         .as_ref()
         .map(|r| r.client_can_negotiate.iter().cloned().collect())
         .unwrap_or_default();
+    let v_inc: std::collections::HashSet<String> = dual
+        .vanilla
+        .as_ref()
+        .map(|r| r.client_inconclusive.iter().cloned().collect())
+        .unwrap_or_default();
+    let e_inc: std::collections::HashSet<String> = dual
+        .experimental
+        .as_ref()
+        .map(|r| r.client_inconclusive.iter().cloned().collect())
+        .unwrap_or_default();
 
     if let Some(v) = dual.vanilla.as_ref().and_then(|r| r.server_version.clone()) {
         println!("SSH server version: {}", v);
@@ -593,9 +603,26 @@ fn print_ssh_dual(dual: &DualSshReport) {
         if is_ssh_protocol_marker(k) {
             continue;
         }
-        let v = if v_set.contains(k) { "ok" } else { "-" };
-        let e = if e_set.contains(k) { "ok" } else { "-" };
+        let v = if v_set.contains(k) {
+            "ok"
+        } else if v_inc.contains(k) {
+            "?"
+        } else {
+            "-"
+        };
+        let e = if e_set.contains(k) {
+            "ok"
+        } else if e_inc.contains(k) {
+            "?"
+        } else {
+            "-"
+        };
         println!("  {:<name_w$}  {:<16}  {:<16}", k, v, e);
+    }
+    if !v_inc.is_empty() || !e_inc.is_empty() {
+        println!(
+            "  ? = could not be determined (timeout or dropped connection); left out of the diff."
+        );
     }
 
     println!();
