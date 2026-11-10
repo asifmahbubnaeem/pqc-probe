@@ -11,7 +11,7 @@
 
 use crate::{ProbeError, Target};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::process::Command;
@@ -25,6 +25,16 @@ pub struct SshProbeOptions {
     /// Most `ssh` processes run at once in the per-algorithm phase. Each attempt is a real
     /// connection to the target, so keep this low for hosted use.
     pub max_parallel: usize,
+    /// How many post-quantum algorithms get a real handshake test after the traffic-free
+    /// `ssh -Q kex` check. Each test is a connection to the target, and sshd 9.8+ penalizes
+    /// sources that connect and drop, so keep this small. 0 = no handshake tests.
+    pub max_verify: usize,
+    /// Pause after each handshake test, while the test slot is still held. OpenSSH 9.8+ servers
+    /// (`PerSourcePenalties`, on by default) charge a source about 1 s for every connection that
+    /// ends before authentication and refuse the source once the total passes a threshold
+    /// (observed: "activating ipv4 penalty of 16 seconds"). About one connection per second
+    /// per client keeps the total near zero.
+    pub pace: Duration,
 }
 
 impl Default for SshProbeOptions {
@@ -32,7 +42,9 @@ impl Default for SshProbeOptions {
         Self {
             timeout: Duration::from_secs(10),
             ssh_path: "ssh".to_string(),
-            max_parallel: 4,
+            max_parallel: 1,
+            max_verify: 8,
+            pace: Duration::from_millis(1100),
         }
     }
 }
@@ -50,6 +62,14 @@ pub struct SshReport {
     /// even after a retry. Neither "supported" nor "unsupported": left out of the diff.
     #[serde(default)]
     pub client_inconclusive: Vec<String>,
+    /// Subset of `client_can_negotiate` that completed a real key exchange with the target.
+    /// The rest are algorithms the client implements (`ssh -Q kex`) but were not tested.
+    #[serde(default)]
+    pub client_verified: Vec<String>,
+    /// Offered algorithms the client implements but whose key exchange definitely failed
+    /// (for example Classic McEliece keys too large for the client).
+    #[serde(default)]
+    pub client_failed: Vec<String>,
     /// First line of `ssh -V` for this client, e.g.
     /// "OpenSSH_9.6p1 Ubuntu-3ubuntu13.20, OpenSSL 3.5.2 5 Aug 2025".
     #[serde(default)]
@@ -117,35 +137,69 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
         };
     let client_version = detect_client_version(&opts.ssh_path).await;
 
-    // Phase 2: for each offered KEX, try to negotiate with this client.
-    // Run in parallel to keep the whole probe fast.
+    // Phase 2a (no network traffic): which offered algorithms does this client implement?
+    // `ssh -Q kex` lists them. If that fails, fall back to testing every offered algorithm.
+    let candidates: Vec<String> = server_offered_kex
+        .iter()
+        .filter(|k| !is_protocol_marker(k))
+        .cloned()
+        .collect();
+    let (mut usable, to_verify): (BTreeSet<String>, Vec<String>) =
+        match query_client_kex(&opts.ssh_path, opts.timeout).await {
+            Some(supported) => {
+                let usable: BTreeSet<String> = candidates
+                    .iter()
+                    .filter(|k| supported.contains(*k))
+                    .cloned()
+                    .collect();
+                let to_verify = pick_to_verify(&candidates, &usable, opts.max_verify);
+                (usable, to_verify)
+            }
+            None => (BTreeSet::new(), candidates.clone()),
+        };
+
+    // Phase 2b: a real handshake for a few post-quantum algorithms (or all, in the fallback).
     let limiter = std::sync::Arc::new(tokio::sync::Semaphore::new(opts.max_parallel.max(1)));
-    let mut handles = Vec::with_capacity(server_offered_kex.len());
-    for kex in server_offered_kex.iter().filter(|k| !is_protocol_marker(k)) {
+    let mut handles = Vec::with_capacity(to_verify.len());
+    for kex in to_verify {
         let limiter = std::sync::Arc::clone(&limiter);
-        let kex = kex.clone();
         let ssh_path = opts.ssh_path.clone();
         let target = target.clone();
         let timeout = opts.timeout;
+        let pace = opts.pace;
         handles.push(tokio::spawn(async move {
             let _permit = limiter.acquire_owned().await.ok()?;
             let outcome = try_kex(&ssh_path, &target, timeout, &kex).await;
+            // Keep the slot while pausing, so the next test starts no sooner than `pace` later.
+            tokio::time::sleep(pace).await;
             Some((kex, outcome))
         }));
     }
 
-    let mut client_can_negotiate = Vec::new();
+    let mut client_verified = Vec::new();
+    let mut client_failed = Vec::new();
     let mut client_inconclusive = Vec::new();
     for h in handles {
         if let Ok(Some((kex, outcome))) = h.await {
             match outcome {
-                KexOutcome::Negotiated => client_can_negotiate.push(kex),
-                KexOutcome::Inconclusive => client_inconclusive.push(kex),
-                KexOutcome::NotNegotiable => {}
+                KexOutcome::Negotiated => {
+                    usable.insert(kex.clone());
+                    client_verified.push(kex);
+                }
+                KexOutcome::NotNegotiable => {
+                    usable.remove(&kex);
+                    client_failed.push(kex);
+                }
+                KexOutcome::Inconclusive => {
+                    usable.remove(&kex);
+                    client_inconclusive.push(kex);
+                }
             }
         }
     }
-    client_can_negotiate.sort();
+    let client_can_negotiate: Vec<String> = usable.into_iter().collect();
+    client_verified.sort();
+    client_failed.sort();
     client_inconclusive.sort();
 
     Ok(SshReport {
@@ -154,6 +208,8 @@ pub async fn probe_ssh(target: &Target, opts: &SshProbeOptions) -> Result<SshRep
         server_offered_kex,
         client_can_negotiate,
         client_inconclusive,
+        client_verified,
+        client_failed,
         client_version,
     })
 }
@@ -275,6 +331,66 @@ async fn run_ssh(
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     ))
+}
+
+/// The algorithms this ssh client implements, from `ssh -Q kex` (no network traffic).
+/// None if the command fails or lists nothing.
+async fn query_client_kex(ssh_path: &str, timeout: Duration) -> Option<HashSet<String>> {
+    let out = tokio::time::timeout(
+        timeout,
+        Command::new(ssh_path)
+            .args(["-Q", "kex"])
+            .stdin(std::process::Stdio::null())
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await
+    .ok()?
+    .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let set = parse_query_list(&String::from_utf8_lossy(&out.stdout));
+    (!set.is_empty()).then_some(set)
+}
+
+/// One name per line, as printed by `ssh -Q`.
+fn parse_query_list(text: &str) -> HashSet<String> {
+    text.lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+/// Post-quantum or hybrid KEX names (ML-KEM, sntrup, Kyber, Frodo, BIKE, McEliece, HQC).
+fn is_pq_kex_name(name: &str) -> bool {
+    crate::is_pq_group_name(name) || name.to_ascii_lowercase().contains("mceliece")
+}
+
+/// Lower sorts first: standardized ML-KEM, then OpenSSH's sntrup, then everything else.
+fn verify_priority(name: &str) -> u8 {
+    let n = name.to_ascii_lowercase();
+    if n.contains("mlkem") {
+        0
+    } else if n.contains("sntrup") {
+        1
+    } else {
+        2
+    }
+}
+
+/// Which usable algorithms get a real handshake: post-quantum ones only, most important
+/// first (ties keep the server's order), at most `max`.
+fn pick_to_verify(offered: &[String], usable: &BTreeSet<String>, max: usize) -> Vec<String> {
+    let mut pq: Vec<String> = offered
+        .iter()
+        .filter(|k| usable.contains(*k) && is_pq_kex_name(k))
+        .cloned()
+        .collect();
+    pq.sort_by_key(|k| verify_priority(k)); // stable
+    pq.truncate(max);
+    pq
 }
 
 /// Result of trying one KEX algorithm with one ssh client.
@@ -560,6 +676,8 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
             server_offered_kex: vec![],
             client_can_negotiate: vec!["curve25519-sha256".into(), "mlkem768x25519-sha256".into()],
             client_inconclusive: vec![],
+            client_verified: vec![],
+            client_failed: vec![],
             client_version: None,
         };
         let e = SshReport {
@@ -572,6 +690,8 @@ debug1: kex: host key algorithm: ssh-ed25519\n\
                 "sntrup761x25519-sha512@openssh.com".into(),
             ],
             client_inconclusive: vec![],
+            client_verified: vec![],
+            client_failed: vec![],
             client_version: None,
         };
 
@@ -840,6 +960,8 @@ mod attempt_tests {
             server_offered_kex: vec![],
             client_can_negotiate: can.iter().map(|s| s.to_string()).collect(),
             client_inconclusive: inc.iter().map(|s| s.to_string()).collect(),
+            client_verified: vec![],
+            client_failed: vec![],
             client_version: None,
         };
         let v = report(&["a"], &["b"]);
@@ -853,5 +975,103 @@ mod attempt_tests {
             .collect();
         // "b" is only on the experimental side, but vanilla could not be tested on it.
         assert_eq!(only_e, vec![&"c".to_string()]);
+    }
+}
+
+#[cfg(test)]
+mod support_check_tests {
+    use super::*;
+
+    fn names(v: &[&str]) -> Vec<String> {
+        v.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn parses_ssh_dash_q_output() {
+        let set = parse_query_list(
+            "curve25519-sha256\n  mlkem768x25519-sha256 \n\nsntrup761x25519-sha512@openssh.com\n",
+        );
+        assert_eq!(set.len(), 3);
+        assert!(set.contains("mlkem768x25519-sha256"));
+        assert!(parse_query_list("").is_empty());
+    }
+
+    #[test]
+    fn pq_kex_names() {
+        for n in [
+            "mlkem768x25519-sha256",
+            "sntrup761x25519-sha512@openssh.com",
+            "kyber-768-sha384",
+            "frodokem-640-aes-sha256",
+            "bike-l1-sha512",
+            "classic-mceliece-348864-sha256",
+        ] {
+            assert!(is_pq_kex_name(n), "{n}");
+        }
+        for n in [
+            "curve25519-sha256",
+            "ecdh-sha2-nistp256",
+            "diffie-hellman-group14-sha256",
+        ] {
+            assert!(!is_pq_kex_name(n), "{n}");
+        }
+    }
+
+    #[test]
+    fn verification_picks_pq_usable_names_by_priority_and_caps_them() {
+        let offered = names(&[
+            "curve25519-sha256",
+            "kyber-512-sha256",
+            "sntrup761x25519-sha512@openssh.com",
+            "mlkem768x25519-sha256",
+            "frodokem-640-aes-sha256",
+            "mlkem1024-sha384",
+            "bike-l1-sha512",
+        ]);
+        // the client lacks frodokem; curve25519 is not post-quantum
+        let usable: BTreeSet<String> = offered
+            .iter()
+            .filter(|k| k.as_str() != "frodokem-640-aes-sha256")
+            .cloned()
+            .collect();
+        assert_eq!(
+            pick_to_verify(&offered, &usable, 10),
+            names(&[
+                "mlkem768x25519-sha256",
+                "mlkem1024-sha384",
+                "sntrup761x25519-sha512@openssh.com",
+                "kyber-512-sha256",
+                "bike-l1-sha512",
+            ])
+        );
+        assert_eq!(pick_to_verify(&offered, &usable, 2).len(), 2);
+        assert!(pick_to_verify(&offered, &usable, 0).is_empty());
+        assert!(pick_to_verify(&offered, &BTreeSet::new(), 5).is_empty());
+    }
+
+    #[test]
+    fn default_verification_cap_is_small() {
+        assert_eq!(SshProbeOptions::default().max_verify, 8);
+    }
+
+    #[tokio::test]
+    async fn missing_ssh_binary_means_no_local_support_list() {
+        assert!(
+            query_client_kex("/nonexistent/ssh-for-test", Duration::from_secs(2))
+                .await
+                .is_none()
+        );
+    }
+}
+
+#[cfg(test)]
+mod pacing_tests {
+    use super::*;
+
+    #[test]
+    fn handshake_tests_are_sequential_and_paced_by_default() {
+        let o = SshProbeOptions::default();
+        assert_eq!(o.max_parallel, 1);
+        assert!(o.pace >= Duration::from_secs(1));
     }
 }

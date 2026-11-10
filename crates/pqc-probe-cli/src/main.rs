@@ -46,6 +46,11 @@ enum Command {
         /// Override SSH port (default: parsed from target or 22)
         #[arg(long)]
         ssh_port: Option<u16>,
+        /// How many post-quantum SSH algorithms get a real handshake test (each is a
+        /// connection to the target). The client's support for every other algorithm comes
+        /// from `ssh -Q kex`, with no traffic. 0 = no handshake tests.
+        #[arg(long, default_value_t = 8)]
+        ssh_verify: usize,
     },
 
     /// Batch-scan a CSV of domains, write results to another CSV.
@@ -113,7 +118,13 @@ async fn main() -> Result<()> {
             timeout,
             tls_port,
             ssh_port,
-        } => run_probe(target, mode, protocol, output, timeout, tls_port, ssh_port).await,
+            ssh_verify,
+        } => {
+            run_probe(
+                target, mode, protocol, output, timeout, tls_port, ssh_port, ssh_verify,
+            )
+            .await
+        }
     }
 }
 
@@ -127,6 +138,7 @@ fn with_default_port(s: &str, ssh_only: bool) -> String {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_probe(
     target_str: String,
     mode: Mode,
@@ -135,6 +147,7 @@ async fn run_probe(
     timeout: u64,
     tls_port: Option<u16>,
     ssh_port: Option<u16>,
+    ssh_verify: usize,
 ) -> Result<()> {
     let target = Target::parse(&with_default_port(
         &target_str,
@@ -242,6 +255,7 @@ async fn run_probe(
                 let opts = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: vanilla_ssh.clone(),
+                    max_verify: ssh_verify,
                     ..Default::default()
                 };
                 ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
@@ -256,6 +270,7 @@ async fn run_probe(
                 let opts = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: path,
+                    max_verify: ssh_verify,
                     ..Default::default()
                 };
                 ssh_single = Some(probe_ssh(&ssh_target, &opts).await.context("SSH probe")?);
@@ -270,11 +285,13 @@ async fn run_probe(
                 let v = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: vanilla_ssh.clone(),
+                    max_verify: ssh_verify,
                     ..Default::default()
                 };
                 let e = SshProbeOptions {
                     timeout: timeout_dur,
                     ssh_path: oqs_path,
+                    max_verify: ssh_verify,
                     ..Default::default()
                 };
                 ssh_dual = Some(
@@ -532,6 +549,29 @@ fn print_ssh_single(report: &SshReport, experimental: bool) {
     }
 }
 
+type NameSet = std::collections::HashSet<String>;
+
+/// One cell of the SSH table for one client and one algorithm.
+fn kex_cell(
+    k: &str,
+    can: &NameSet,
+    verified: &NameSet,
+    failed: &NameSet,
+    inconclusive: &NameSet,
+) -> &'static str {
+    if verified.contains(k) {
+        "ok (tested)"
+    } else if can.contains(k) {
+        "ok"
+    } else if failed.contains(k) {
+        "fails"
+    } else if inconclusive.contains(k) {
+        "?"
+    } else {
+        "-"
+    }
+}
+
 fn print_ssh_dual(dual: &DualSshReport) {
     let server_offered: Vec<String> = dual
         .vanilla
@@ -563,6 +603,26 @@ fn print_ssh_dual(dual: &DualSshReport) {
         .experimental
         .as_ref()
         .map(|r| r.client_inconclusive.iter().cloned().collect())
+        .unwrap_or_default();
+    let v_ver: NameSet = dual
+        .vanilla
+        .as_ref()
+        .map(|r| r.client_verified.iter().cloned().collect())
+        .unwrap_or_default();
+    let e_ver: NameSet = dual
+        .experimental
+        .as_ref()
+        .map(|r| r.client_verified.iter().cloned().collect())
+        .unwrap_or_default();
+    let v_failed: NameSet = dual
+        .vanilla
+        .as_ref()
+        .map(|r| r.client_failed.iter().cloned().collect())
+        .unwrap_or_default();
+    let e_failed: NameSet = dual
+        .experimental
+        .as_ref()
+        .map(|r| r.client_failed.iter().cloned().collect())
         .unwrap_or_default();
 
     if let Some(v) = dual.vanilla.as_ref().and_then(|r| r.server_version.clone()) {
@@ -603,27 +663,14 @@ fn print_ssh_dual(dual: &DualSshReport) {
         if is_ssh_protocol_marker(k) {
             continue;
         }
-        let v = if v_set.contains(k) {
-            "ok"
-        } else if v_inc.contains(k) {
-            "?"
-        } else {
-            "-"
-        };
-        let e = if e_set.contains(k) {
-            "ok"
-        } else if e_inc.contains(k) {
-            "?"
-        } else {
-            "-"
-        };
+        let v = kex_cell(k, &v_set, &v_ver, &v_failed, &v_inc);
+        let e = kex_cell(k, &e_set, &e_ver, &e_failed, &e_inc);
         println!("  {:<name_w$}  {:<16}  {:<16}", k, v, e);
     }
-    if !v_inc.is_empty() || !e_inc.is_empty() {
-        println!(
-            "  ? = could not be determined (timeout or dropped connection); left out of the diff."
-        );
-    }
+    println!("  ok (tested) = key exchange completed with this server;");
+    println!("  ok = the client implements it (ssh -Q kex), not handshake-tested;");
+    println!("  fails = exchange failed; ? = no answer (timeout/dropped), left out of the diff;");
+    println!("  - = the client does not implement it.");
 
     println!();
     println!("SSH diff:");
@@ -775,6 +822,20 @@ fn is_ssh_protocol_marker(name: &str) -> bool {
 #[cfg(test)]
 mod cli_tests {
     use super::*;
+
+    #[test]
+    fn ssh_table_cells() {
+        let set = |v: &[&str]| -> NameSet { v.iter().map(|s| s.to_string()).collect() };
+        let can = set(&["a", "b"]);
+        let ver = set(&["b"]);
+        let failed = set(&["c"]);
+        let inc = set(&["d"]);
+        assert_eq!(kex_cell("a", &can, &ver, &failed, &inc), "ok");
+        assert_eq!(kex_cell("b", &can, &ver, &failed, &inc), "ok (tested)");
+        assert_eq!(kex_cell("c", &can, &ver, &failed, &inc), "fails");
+        assert_eq!(kex_cell("d", &can, &ver, &failed, &inc), "?");
+        assert_eq!(kex_cell("e", &can, &ver, &failed, &inc), "-");
+    }
 
     #[test]
     fn bare_host_gets_default_port() {

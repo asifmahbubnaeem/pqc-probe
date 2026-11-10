@@ -37,7 +37,12 @@ document. Other tools (for example the planned Migration Dashboard) depend on it
   server. It is `null` when the stock client did not run or failed.
 - `ssh.*.client_inconclusive` lists offered algorithms a client could not be tested on (timeout or
   dropped connection, even after one retry). They are neither supported nor unsupported and are
-  excluded from `ssh.diff`. `client_can_negotiate` means the key exchange completed.
+  excluded from `ssh.diff`.
+- `ssh.*.client_can_negotiate` lists offered algorithms the client can use: it implements them
+  (`ssh -Q kex`, no network traffic) and, if tested, the key exchange completed. `client_verified`
+  is the subset that was actually handshake-tested (post-quantum algorithms only, capped by
+  `--ssh-verify`, default 8). `client_failed` lists algorithms the client implements whose key
+  exchange definitely failed; they are not in `client_can_negotiate`.
 - Every key is always present. `null` means "not applicable, not run, or failed" and never
   "unknown, assume nothing happened": check `errors`.
 - `request.protocol`: `tls | ssh | both`. `request.mode`: `vanilla | experimental | both`.

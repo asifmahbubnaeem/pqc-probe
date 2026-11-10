@@ -229,9 +229,25 @@
           },
           "type": "array"
         },
+        "client_failed": {
+          "default": [],
+          "description": "Implemented by the client, but the key exchange definitely failed.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "client_inconclusive": {
           "default": [],
           "description": "Offered algorithms this client could not be tested on (timeouts, dropped connections)\neven after a retry. They are left out of the diff.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "client_verified": {
+          "default": [],
+          "description": "Subset of `client_can_negotiate` that completed a real key exchange with the target;\nthe rest are implemented by the client (`ssh -Q kex`) but were not handshake-tested.",
           "items": {
             "type": "string"
           },
@@ -261,7 +277,9 @@
       },
       "required": [
         "client_can_negotiate",
+        "client_failed",
         "client_inconclusive",
+        "client_verified",
         "client_version",
         "server_offered_kex",
         "server_version"

@@ -130,6 +130,13 @@ pub struct SshClientResult {
     /// even after a retry. They are left out of the diff.
     #[serde(default)]
     pub client_inconclusive: Vec<String>,
+    /// Subset of `client_can_negotiate` that completed a real key exchange with the target;
+    /// the rest are implemented by the client (`ssh -Q kex`) but were not handshake-tested.
+    #[serde(default)]
+    pub client_verified: Vec<String>,
+    /// Implemented by the client, but the key exchange definitely failed.
+    #[serde(default)]
+    pub client_failed: Vec<String>,
 }
 
 impl From<SshReport> for SshClientResult {
@@ -140,6 +147,8 @@ impl From<SshReport> for SshClientResult {
             server_offered_kex: r.server_offered_kex,
             client_can_negotiate: r.client_can_negotiate,
             client_inconclusive: r.client_inconclusive,
+            client_verified: r.client_verified,
+            client_failed: r.client_failed,
         }
     }
 }
@@ -435,6 +444,8 @@ mod report_tests {
             server_offered_kex: vec!["curve25519-sha256".into()],
             client_can_negotiate: vec!["curve25519-sha256".into()],
             client_inconclusive: vec![],
+            client_verified: vec![],
+            client_failed: vec![],
             client_version: Some(version.into()),
         };
         let dual = DualSshReport {
