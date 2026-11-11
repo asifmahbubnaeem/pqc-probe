@@ -79,3 +79,20 @@ set `PQC_WEB_TRUSTED_PROXIES` to its address, otherwise every client looks like 
 Known limits: the cooldown matches the target as written (lower-cased), not the resolved
 address, so two spellings of one host are separate entries and are only held back by the
 per-client limits. `GET` requests are not rate limited yet.
+
+## Web interface
+
+`GET /` serves a form; it posts to `/probe`, which goes through the same checks as the JSON API
+(policy, rate limits, cooldown) and redirects to `/probes/{id}`. That page refreshes itself every
+few seconds while the job runs and then shows the report; the JSON stays at
+`/api/v1/probes/{id}/report`.
+
+- No JavaScript and no inline styles; the stylesheet is served from `/static/style.css`.
+- Every value from the scanned server (certificate subjects, SSH version, algorithm names) is
+  HTML-escaped; tests render hostile fixtures to keep it that way.
+- Every response carries `Content-Security-Policy: default-src 'none'; style-src 'self';
+  form-action 'self'; base-uri 'none'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer` and `X-Frame-Options: DENY`. Behind a reverse proxy, add HSTS
+  there.
+- The form has no CSRF token: it needs no login and only starts a probe, which is rate limited
+  per client address like any other request.

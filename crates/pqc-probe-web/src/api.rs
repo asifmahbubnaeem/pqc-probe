@@ -4,6 +4,7 @@ use crate::config::Config;
 use crate::error::ApiError;
 use crate::jobs::{JobStore, ReportLookup, SubmitError, Submitted};
 use crate::model::{is_valid_job_id, Created, JobStatus, ProbeRequest};
+use crate::pages;
 use crate::prober::{ProbeJob, Prober, Resolver};
 use crate::ratelimit::{client_ip, IpLimiter};
 use axum::extract::rejection::JsonRejection;
@@ -36,6 +37,10 @@ pub struct AppState {
 
 pub fn router(state: AppState) -> Router {
     Router::new()
+        .route("/", get(pages::index))
+        .route("/probe", post(pages::submit_form))
+        .route("/probes/{id}", get(pages::job_page))
+        .route("/static/style.css", get(pages::style))
         .route("/healthz", get(healthz))
         .route("/readyz", get(readyz))
         .route("/api/v1/meta", get(meta))
@@ -43,6 +48,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/v1/probes/{id}", get(get_probe))
         .route("/api/v1/probes/{id}/report", get(get_report))
         .layer(DefaultBodyLimit::max(MAX_BODY_BYTES))
+        .layer(axum::middleware::map_response(pages::security_headers))
         .with_state(state)
 }
 
@@ -198,6 +204,17 @@ async fn create_probe(
     payload: Result<Json<ProbeRequest>, JsonRejection>,
 ) -> Result<Response, ApiError> {
     let Json(req) = payload.map_err(json_rejection)?;
+    let (id, reused) = submit(&st, ip, req).await?;
+    Ok(created_response(&st, id, reused))
+}
+
+/// Validate a request, apply the limits and start (or reuse) a job. Shared by the JSON API and
+/// the HTML form. Returns the job id and whether an earlier job was reused.
+pub(crate) async fn submit(
+    st: &AppState,
+    ip: IpAddr,
+    req: ProbeRequest,
+) -> Result<(String, bool), ApiError> {
     let (host, port_in_target) = split_target(&req.target)?;
 
     let want_tls = matches!(
@@ -228,7 +245,7 @@ async fn create_probe(
     // nothing counted against the client.
     let key = dedupe_key(&host, req.protocol, mode, tls_port, ssh_port);
     if let Some(id) = st.store.recent(&key) {
-        return Ok(created_response(&st, id, true));
+        return Ok((id, true));
     }
     // From here on the request costs work (DNS at least), so it counts. The guard holds the
     // client's in-flight slot; it is released on any early return and when the job ends.
@@ -260,8 +277,8 @@ async fn create_probe(
         .submit_keyed(key, job, Arc::clone(&st.prober), Box::new(guard))
         .map_err(|SubmitError::Busy| ApiError::busy(BUSY_RETRY_SECS))?;
     Ok(match submitted {
-        Submitted::New(id) => created_response(&st, id, false),
-        Submitted::Reused(id) => created_response(&st, id, true),
+        Submitted::New(id) => (id, false),
+        Submitted::Reused(id) => (id, true),
     })
 }
 

@@ -12,8 +12,10 @@
 pub mod api;
 pub mod config;
 pub mod error;
+pub mod html;
 pub mod jobs;
 pub mod model;
+pub mod pages;
 pub mod prober;
 pub mod ratelimit;
 
