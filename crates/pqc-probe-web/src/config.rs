@@ -1,8 +1,9 @@
 //! Service configuration, read from `PQC_WEB_*` environment variables.
 
+use crate::ratelimit::RateLimits;
 use pqc_probe_core::policy::DEFAULT_ALLOWED_PORTS;
 use pqc_probe_core::{ModeSelection, ProtocolSelection};
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -24,6 +25,8 @@ pub struct Config {
     pub probe_timeout: Duration,
     /// The openssl and ssh binaries probes run.
     pub tools: ToolPaths,
+    /// Per-client and per-target limits.
+    pub limits: RateLimits,
 }
 
 impl Default for Config {
@@ -37,6 +40,7 @@ impl Default for Config {
             allowed_ports: DEFAULT_ALLOWED_PORTS.to_vec(),
             probe_timeout: Duration::from_secs(15),
             tools: ToolPaths::default(),
+            limits: RateLimits::default(),
         }
     }
 }
@@ -83,6 +87,35 @@ impl Config {
                 Duration::from_secs(parse_in_range("PQC_WEB_PROBE_TIMEOUT_SECS", &v, 1, 120)?);
         }
         c.tools = ToolPaths::from_lookup(&get);
+        if let Some(v) = get("PQC_WEB_IP_BURST") {
+            c.limits.burst = parse_in_range("PQC_WEB_IP_BURST", &v, 1, 1000)? as u32;
+        }
+        if let Some(v) = get("PQC_WEB_IP_PER_MINUTE") {
+            c.limits.per_minute = parse_in_range("PQC_WEB_IP_PER_MINUTE", &v, 1, 6000)? as u32;
+        }
+        if let Some(v) = get("PQC_WEB_IP_MAX_INFLIGHT") {
+            c.limits.max_inflight = parse_in_range("PQC_WEB_IP_MAX_INFLIGHT", &v, 1, 100)? as u32;
+        }
+        if let Some(v) = get("PQC_WEB_IP_PER_DAY") {
+            c.limits.per_day = parse_in_range("PQC_WEB_IP_PER_DAY", &v, 1, 1_000_000)? as u32;
+        }
+        if let Some(v) = get("PQC_WEB_TARGET_COOLDOWN_SECS") {
+            c.limits.target_cooldown =
+                Duration::from_secs(parse_in_range("PQC_WEB_TARGET_COOLDOWN_SECS", &v, 0, 3600)?);
+        }
+        if let Some(v) = get("PQC_WEB_TRUSTED_PROXIES") {
+            let ips: Result<Vec<IpAddr>, _> = v
+                .split(',')
+                .map(str::trim)
+                .filter(|p| !p.is_empty())
+                .map(|p| p.parse::<IpAddr>().map(|ip| ip.to_canonical()))
+                .collect();
+            c.limits.trusted_proxies = ips.map_err(|_| {
+                format!(
+                    "PQC_WEB_TRUSTED_PROXIES '{v}' must be a comma-separated list of IP addresses"
+                )
+            })?;
+        }
         if c.queue_limit < c.max_concurrent {
             return Err(format!(
                 "PQC_WEB_QUEUE_LIMIT ({}) must be at least PQC_WEB_MAX_CONCURRENT ({})",
@@ -299,6 +332,53 @@ mod tests {
         );
         assert_eq!(none.available_modes(P::Tls), vec!["vanilla"]);
         assert_eq!(all.available_modes(P::Tls).len(), 3);
+    }
+
+    #[test]
+    fn rate_limits_have_conservative_defaults_and_can_be_overridden() {
+        let c = cfg(&[]).unwrap();
+        assert_eq!(
+            (
+                c.limits.burst,
+                c.limits.per_minute,
+                c.limits.max_inflight,
+                c.limits.per_day
+            ),
+            (5, 6, 2, 60)
+        );
+        assert_eq!(c.limits.target_cooldown, Duration::from_secs(60));
+        assert!(c.limits.trusted_proxies.is_empty());
+        let c = cfg(&[
+            ("PQC_WEB_IP_BURST", "10"),
+            ("PQC_WEB_IP_PER_MINUTE", "30"),
+            ("PQC_WEB_IP_MAX_INFLIGHT", "3"),
+            ("PQC_WEB_IP_PER_DAY", "500"),
+            ("PQC_WEB_TARGET_COOLDOWN_SECS", "0"),
+            ("PQC_WEB_TRUSTED_PROXIES", "10.0.0.1, ::ffff:10.0.0.2 ,"),
+        ])
+        .unwrap();
+        assert_eq!(c.limits.burst, 10);
+        assert_eq!(c.limits.per_day, 500);
+        assert_eq!(c.limits.target_cooldown, Duration::ZERO);
+        let want: Vec<IpAddr> = vec!["10.0.0.1".parse().unwrap(), "10.0.0.2".parse().unwrap()];
+        assert_eq!(
+            c.limits.trusted_proxies, want,
+            "mapped addresses are canonicalised"
+        );
+    }
+
+    #[test]
+    fn bad_rate_limit_values_name_the_variable() {
+        for (k, v) in [
+            ("PQC_WEB_IP_BURST", "0"),
+            ("PQC_WEB_IP_PER_MINUTE", "x"),
+            ("PQC_WEB_IP_MAX_INFLIGHT", "1000"),
+            ("PQC_WEB_TARGET_COOLDOWN_SECS", "99999"),
+            ("PQC_WEB_TRUSTED_PROXIES", "10.0.0.1,proxy.example"),
+        ] {
+            let err = cfg(&[(k, v)]).unwrap_err();
+            assert!(err.contains(k), "{err}");
+        }
     }
 
     #[test]

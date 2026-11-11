@@ -2,19 +2,23 @@
 
 use crate::config::Config;
 use crate::error::ApiError;
-use crate::jobs::{JobStore, ReportLookup, SubmitError};
+use crate::jobs::{JobStore, ReportLookup, SubmitError, Submitted};
 use crate::model::{is_valid_job_id, Created, JobStatus, ProbeRequest};
 use crate::prober::{ProbeJob, Prober, Resolver};
+use crate::ratelimit::{client_ip, IpLimiter};
 use axum::extract::rejection::JsonRejection;
-use axum::extract::{DefaultBodyLimit, Path, State};
+use axum::extract::{ConnectInfo, DefaultBodyLimit, FromRequestParts, Path, State};
+use axum::http::request::Parts;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use pqc_probe_core::policy::Policy;
-use pqc_probe_core::{ProtocolSelection, SCHEMA_VERSION};
+use pqc_probe_core::{ModeSelection, ProtocolSelection, SCHEMA_VERSION};
 use serde_json::json;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
+use std::time::Instant;
 
 /// Request bodies are tiny; anything bigger is refused before it is parsed.
 const MAX_BODY_BYTES: usize = 8 * 1024;
@@ -27,6 +31,7 @@ pub struct AppState {
     pub store: Arc<JobStore>,
     pub prober: Arc<dyn Prober>,
     pub resolver: Arc<dyn Resolver>,
+    pub limiter: Arc<IpLimiter>,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -63,6 +68,13 @@ async fn meta(State(st): State<AppState>) -> Json<serde_json::Value> {
             "tls": c.tools.available_modes(ProtocolSelection::Tls),
             "ssh": c.tools.available_modes(ProtocolSelection::Ssh),
         },
+        "rate_limits": {
+            "burst": c.limits.burst,
+            "per_minute": c.limits.per_minute,
+            "max_in_flight": c.limits.max_inflight,
+            "per_day": c.limits.per_day,
+            "target_cooldown_seconds": c.limits.target_cooldown.as_secs(),
+        },
         "limits": {
             "max_concurrent": c.max_concurrent,
             "queue_limit": c.queue_limit,
@@ -70,6 +82,76 @@ async fn meta(State(st): State<AppState>) -> Json<serde_json::Value> {
             "result_ttl_seconds": c.result_ttl.as_secs(),
         },
     }))
+}
+
+/// The address a request came from, after applying the trusted-proxy rules.
+pub struct ClientIp(pub IpAddr);
+
+impl FromRequestParts<AppState> for ClientIp {
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let peer = parts
+            .extensions
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|c| c.0.ip())
+            .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED));
+        let values: Vec<&str> = parts
+            .headers
+            .get_all("x-forwarded-for")
+            .iter()
+            .filter_map(|v| v.to_str().ok())
+            .collect();
+        let forwarded = (!values.is_empty()).then(|| values.join(","));
+        Ok(ClientIp(client_ip(
+            peer,
+            forwarded.as_deref(),
+            &state.limiter.limits().trusted_proxies,
+        )))
+    }
+}
+
+/// What makes two requests "the same target" for the cooldown. Names are compared as written
+/// (lower-cased); two spellings of one host get separate entries and are still caught by the
+/// per-client limits.
+fn dedupe_key(
+    host: &str,
+    protocol: ProtocolSelection,
+    mode: ModeSelection,
+    tls_port: Option<u16>,
+    ssh_port: Option<u16>,
+) -> String {
+    format!(
+        "{}|{protocol:?}|{mode:?}|{tls_port:?}|{ssh_port:?}",
+        host.to_ascii_lowercase()
+    )
+}
+
+fn created_response(st: &AppState, id: String, reused: bool) -> Response {
+    let status = if reused {
+        st.store
+            .view(&id)
+            .map(|v| v.status)
+            .unwrap_or(JobStatus::Queued)
+    } else {
+        JobStatus::Queued
+    };
+    let status_url = format!("/api/v1/probes/{id}");
+    let created = Created {
+        id,
+        status,
+        report_url: format!("{status_url}/report"),
+        status_url: status_url.clone(),
+        reused,
+    };
+    let mut headers = HeaderMap::new();
+    if let Ok(v) = HeaderValue::from_str(&status_url) {
+        headers.insert(header::LOCATION, v);
+    }
+    (StatusCode::ACCEPTED, headers, Json(created)).into_response()
 }
 
 /// Split `host` or `host:port`. Host syntax is checked later by the policy; this only separates
@@ -112,6 +194,7 @@ fn json_rejection(rej: JsonRejection) -> ApiError {
 
 async fn create_probe(
     State(st): State<AppState>,
+    ClientIp(ip): ClientIp,
     payload: Result<Json<ProbeRequest>, JsonRejection>,
 ) -> Result<Response, ApiError> {
     let Json(req) = payload.map_err(json_rejection)?;
@@ -141,6 +224,19 @@ async fn create_probe(
         req.ssh_port.or(from_target).unwrap_or(22)
     });
 
+    // A repeat of a recent request gets the earlier job back: no new probe, no DNS lookup, and
+    // nothing counted against the client.
+    let key = dedupe_key(&host, req.protocol, mode, tls_port, ssh_port);
+    if let Some(id) = st.store.recent(&key) {
+        return Ok(created_response(&st, id, true));
+    }
+    // From here on the request costs work (DNS at least), so it counts. The guard holds the
+    // client's in-flight slot; it is released on any early return and when the job ends.
+    let guard = st
+        .limiter
+        .try_start(ip, Instant::now())
+        .map_err(|d| ApiError::rate_limited(&d))?;
+
     let policy = Policy {
         allowed_ports: st.config.allowed_ports.clone(),
     };
@@ -159,23 +255,14 @@ async fn create_probe(
         tls,
         ssh,
     };
-    let id = st
+    let submitted = st
         .store
-        .submit(job, Arc::clone(&st.prober))
+        .submit_keyed(key, job, Arc::clone(&st.prober), Box::new(guard))
         .map_err(|SubmitError::Busy| ApiError::busy(BUSY_RETRY_SECS))?;
-
-    let status_url = format!("/api/v1/probes/{id}");
-    let created = Created {
-        id,
-        status: JobStatus::Queued,
-        report_url: format!("{status_url}/report"),
-        status_url: status_url.clone(),
-    };
-    let mut headers = HeaderMap::new();
-    if let Ok(v) = HeaderValue::from_str(&status_url) {
-        headers.insert(header::LOCATION, v);
-    }
-    Ok((StatusCode::ACCEPTED, headers, Json(created)).into_response())
+    Ok(match submitted {
+        Submitted::New(id) => created_response(&st, id, false),
+        Submitted::Reused(id) => created_response(&st, id, true),
+    })
 }
 
 async fn get_probe(
@@ -248,6 +335,7 @@ mod tests {
     fn state(config: Config, prober: Arc<dyn Prober>) -> AppState {
         AppState {
             store: JobStore::new(&config),
+            limiter: IpLimiter::new(config.limits.clone()),
             config: Arc::new(config),
             prober,
             resolver: Arc::new(FakeResolver),
@@ -260,6 +348,14 @@ mod tests {
             queue_limit: 10,
             job_timeout: Duration::from_secs(5),
             result_ttl: Duration::from_secs(60),
+            limits: crate::ratelimit::RateLimits {
+                burst: 1000,
+                per_minute: 6000,
+                max_inflight: 1000,
+                per_day: 100_000,
+                target_cooldown: Duration::ZERO,
+                trusted_proxies: vec![],
+            },
             tools: crate::config::ToolPaths {
                 openssl_oqs: Some("openssl-oqs".into()),
                 ssh_oqs: Some("ssh-oqs".into()),
@@ -553,5 +649,110 @@ mod tests {
         assert_eq!(s, StatusCode::SERVICE_UNAVAILABLE);
         let (s, _, _) = send(&app, get_req("/healthz")).await;
         assert_eq!(s, StatusCode::OK);
+    }
+
+    fn post_from(body: &str, peer: &str, xff: Option<&str>) -> Request<Body> {
+        let mut b = Request::builder()
+            .method("POST")
+            .uri("/api/v1/probes")
+            .header("content-type", "application/json")
+            .extension(ConnectInfo(SocketAddr::new(peer.parse().unwrap(), 40000)));
+        if let Some(x) = xff {
+            b = b.header("x-forwarded-for", x);
+        }
+        b.body(Body::from(body.to_string())).unwrap()
+    }
+
+    fn limited(burst: u32, max_inflight: u32, cooldown: u64, proxies: &[&str]) -> Config {
+        Config {
+            limits: crate::ratelimit::RateLimits {
+                burst,
+                per_minute: 6,
+                max_inflight,
+                per_day: 1000,
+                target_cooldown: Duration::from_secs(cooldown),
+                trusted_proxies: proxies.iter().map(|p| p.parse().unwrap()).collect(),
+            },
+            ..small_config()
+        }
+    }
+
+    const BODY: &str = r#"{"target":"example.test"}"#;
+
+    #[tokio::test]
+    async fn the_third_request_in_a_burst_of_two_gets_429_with_retry_after() {
+        let app = router(state(limited(2, 100, 0, &[]), FakeProber::ok()));
+        for _ in 0..2 {
+            let (s, _, _) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+            assert_eq!(s, StatusCode::ACCEPTED);
+        }
+        let (s, h, v) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(v["error"]["code"], "rate_limited");
+        let retry: u64 = h
+            .get("retry-after")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        assert!((1..=60).contains(&retry));
+        let (s, _, _) = send(&app, post_from(BODY, "198.51.100.2", None)).await;
+        assert_eq!(s, StatusCode::ACCEPTED, "another client is unaffected");
+    }
+
+    #[tokio::test]
+    async fn x_forwarded_for_counts_only_from_a_trusted_proxy() {
+        let app = router(state(limited(1, 100, 0, &["10.0.0.1"]), FakeProber::ok()));
+        // Behind the trusted proxy, different forwarded clients have their own budgets.
+        let (s, _, _) = send(&app, post_from(BODY, "10.0.0.1", Some("203.0.113.1"))).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let (s, _, _) = send(&app, post_from(BODY, "10.0.0.1", Some("203.0.113.2"))).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let (s, _, _) = send(&app, post_from(BODY, "10.0.0.1", Some("203.0.113.1"))).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        // A direct client cannot get a fresh budget by lying in the header.
+        let (s, _, _) = send(&app, post_from(BODY, "198.51.100.9", Some("203.0.113.50"))).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let (s, _, _) = send(&app, post_from(BODY, "198.51.100.9", Some("203.0.113.51"))).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn too_many_probes_in_flight_gets_429() {
+        let app = router(state(
+            limited(100, 1, 0, &[]),
+            FakeProber::slow(Duration::from_secs(30)),
+        ));
+        let (s, _, _) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let (s, _, v) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(v["error"]["code"], "rate_limited");
+    }
+
+    #[tokio::test]
+    async fn a_repeat_request_returns_the_earlier_job_and_costs_nothing() {
+        // Burst of one: the repeat must not need a token.
+        let app = router(state(limited(1, 100, 60, &[]), FakeProber::ok()));
+        let (s, _, first) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        assert_eq!(first["reused"], false);
+        let (s, h, again) = send(&app, post_from(BODY, "198.51.100.1", None)).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        assert_eq!(again["reused"], true);
+        assert_eq!(again["id"], first["id"]);
+        let id = first["id"].as_str().unwrap();
+        assert_eq!(
+            h.get("location").unwrap().to_str().unwrap(),
+            format!("/api/v1/probes/{id}")
+        );
+        // A different target is new work, and the token is gone.
+        let (s, _, _) = send(
+            &app,
+            post_from(r#"{"target":"example.test:8443"}"#, "198.51.100.1", None),
+        )
+        .await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
     }
 }

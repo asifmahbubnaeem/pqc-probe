@@ -15,6 +15,17 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::sync::Semaphore;
 
+/// Anything that must live exactly as long as the job (for example a client's in-flight slot).
+pub type Hold = Box<dyn Send + 'static>;
+
+/// Outcome of [`JobStore::submit_keyed`].
+#[derive(Debug, PartialEq, Eq)]
+pub enum Submitted {
+    New(String),
+    /// A job for the same key started within the cooldown; nothing new was queued.
+    Reused(String),
+}
+
 #[derive(Debug)]
 pub enum SubmitError {
     /// Too many jobs queued or running.
@@ -51,6 +62,9 @@ pub struct JobStore {
     queue_limit: usize,
     job_timeout: Duration,
     result_ttl: Duration,
+    /// Most recent job per request key, for the per-target cooldown.
+    recent: Mutex<HashMap<String, (String, Instant)>>,
+    cooldown: Duration,
 }
 
 fn now_rfc3339() -> String {
@@ -74,6 +88,8 @@ impl JobStore {
             queue_limit: config.queue_limit.max(1),
             job_timeout: config.job_timeout,
             result_ttl: config.result_ttl,
+            recent: Mutex::new(HashMap::new()),
+            cooldown: config.limits.target_cooldown,
         })
     }
 
@@ -99,6 +115,47 @@ impl JobStore {
         job: ProbeJob,
         prober: Arc<dyn Prober>,
     ) -> Result<String, SubmitError> {
+        self.submit_with(job, prober, Box::new(()))
+    }
+
+    /// The job a request with this `key` would be answered with: one that started within the
+    /// cooldown and has not been swept yet.
+    pub fn recent(&self, key: &str) -> Option<String> {
+        let recent = self.recent.lock().unwrap_or_else(|e| e.into_inner());
+        self.fresh(&recent, key)
+    }
+
+    // Lock order is always `recent` then `jobs`, never the other way round.
+    fn fresh(&self, recent: &HashMap<String, (String, Instant)>, key: &str) -> Option<String> {
+        let (id, at) = recent.get(key)?;
+        (at.elapsed() < self.cooldown && self.lock().contains_key(id)).then(|| id.clone())
+    }
+
+    /// Like [`submit`](Self::submit), but a request whose `key` already started a job within the
+    /// cooldown gets that job back and nothing new is queued. `hold` is dropped when the job
+    /// ends (or at once when the earlier job is reused).
+    pub fn submit_keyed(
+        self: &Arc<Self>,
+        key: String,
+        job: ProbeJob,
+        prober: Arc<dyn Prober>,
+        hold: Hold,
+    ) -> Result<Submitted, SubmitError> {
+        let mut recent = self.recent.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(id) = self.fresh(&recent, &key) {
+            return Ok(Submitted::Reused(id));
+        }
+        let id = self.submit_with(job, prober, hold)?;
+        recent.insert(key, (id.clone(), Instant::now()));
+        Ok(Submitted::New(id))
+    }
+
+    fn submit_with(
+        self: &Arc<Self>,
+        job: ProbeJob,
+        prober: Arc<dyn Prober>,
+        hold: Hold,
+    ) -> Result<String, SubmitError> {
         let id = new_job_id();
         {
             let mut jobs = self.lock();
@@ -121,7 +178,10 @@ impl JobStore {
         }
         let store = Arc::clone(self);
         let task_id = id.clone();
-        tokio::spawn(async move { store.run(task_id, job, prober).await });
+        tokio::spawn(async move {
+            let _hold = hold;
+            store.run(task_id, job, prober).await
+        });
         Ok(id)
     }
 
@@ -225,6 +285,12 @@ impl JobStore {
     /// Drop finished jobs older than the result TTL. Returns how many were removed.
     pub fn sweep(&self) -> usize {
         let ttl = self.result_ttl;
+        let cooldown = self.cooldown;
+        // Not nested with the jobs lock below (see the lock order note on `fresh`).
+        self.recent
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .retain(|_, (_, at)| at.elapsed() < cooldown);
         let mut jobs = self.lock();
         let before = jobs.len();
         jobs.retain(|_, j| match j.finished {
@@ -376,5 +442,93 @@ mod tests {
         assert!(store.view(&done).is_none());
         assert!(store.view(&running).is_some());
         assert!(matches!(store.report(&done), ReportLookup::NotFound));
+    }
+
+    fn cooldown_cfg(cooldown_ms: u64) -> Config {
+        Config {
+            limits: crate::ratelimit::RateLimits {
+                target_cooldown: Duration::from_millis(cooldown_ms),
+                ..Default::default()
+            },
+            ..cfg(2, 10, 5000, 60_000)
+        }
+    }
+
+    #[tokio::test]
+    async fn a_repeat_within_the_cooldown_reuses_the_job() {
+        let store = JobStore::new(&cooldown_cfg(60_000));
+        let p = FakeProber::ok();
+        let a = store
+            .submit_keyed("k1".into(), job("a.test"), Arc::clone(&p), Box::new(()))
+            .unwrap();
+        let again = store
+            .submit_keyed("k1".into(), job("a.test"), Arc::clone(&p), Box::new(()))
+            .unwrap();
+        let other = store
+            .submit_keyed("k2".into(), job("a.test"), p, Box::new(()))
+            .unwrap();
+        let Submitted::New(id) = a else {
+            panic!("first must be new")
+        };
+        assert_eq!(again, Submitted::Reused(id.clone()));
+        assert!(matches!(other, Submitted::New(ref o) if *o != id));
+        assert_eq!(store.recent("k1"), Some(id));
+        assert_eq!(store.recent("nope"), None);
+    }
+
+    #[tokio::test]
+    async fn cooldown_zero_never_reuses() {
+        let store = JobStore::new(&cooldown_cfg(0));
+        let p = FakeProber::ok();
+        for _ in 0..2 {
+            let r = store
+                .submit_keyed("k".into(), job("a.test"), Arc::clone(&p), Box::new(()))
+                .unwrap();
+            assert!(matches!(r, Submitted::New(_)));
+        }
+    }
+
+    #[tokio::test]
+    async fn the_cooldown_ends_and_sweep_forgets_the_key() {
+        let store = JobStore::new(&cooldown_cfg(30));
+        let p = FakeProber::ok();
+        let first = store
+            .submit_keyed("k".into(), job("a.test"), Arc::clone(&p), Box::new(()))
+            .unwrap();
+        tokio::time::sleep(Duration::from_millis(80)).await;
+        assert_eq!(store.recent("k"), None);
+        let second = store
+            .submit_keyed("k".into(), job("a.test"), p, Box::new(()))
+            .unwrap();
+        assert_ne!(first, second);
+        tokio::time::sleep(Duration::from_millis(80)).await;
+        store.sweep();
+        assert_eq!(store.recent("k"), None);
+    }
+
+    #[tokio::test]
+    async fn the_hold_is_released_when_the_job_ends_or_is_reused() {
+        let store = JobStore::new(&cooldown_cfg(60_000));
+        let p = FakeProber::ok();
+        let token = Arc::new(());
+        store
+            .submit_keyed(
+                "k".into(),
+                job("a.test"),
+                Arc::clone(&p),
+                Box::new(Arc::clone(&token)),
+            )
+            .unwrap();
+        let reused = store
+            .submit_keyed("k".into(), job("a.test"), p, Box::new(Arc::clone(&token)))
+            .unwrap();
+        assert!(matches!(reused, Submitted::Reused(_)));
+        for _ in 0..300 {
+            if Arc::strong_count(&token) == 1 {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        panic!("the hold was never released");
     }
 }

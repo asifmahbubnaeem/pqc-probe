@@ -65,6 +65,9 @@ pub struct Created {
     pub status: JobStatus,
     pub status_url: String,
     pub report_url: String,
+    /// True when an earlier job for the same target (started within the cooldown) is returned
+    /// instead of a new probe.
+    pub reused: bool,
 }
 
 /// 32 lowercase hex characters, as produced by the job store. Anything else cannot be a job id.

@@ -67,6 +67,18 @@ impl ApiError {
     }
 }
 
+impl ApiError {
+    pub fn rate_limited(d: &crate::ratelimit::Denied) -> Self {
+        let mut e = Self::new(StatusCode::TOO_MANY_REQUESTS, "rate_limited", d.message())
+            .with_hint(
+                "Wait for the number of seconds in the Retry-After header. Results of earlier \
+                 probes stay available at GET /api/v1/probes/{id}.",
+            );
+        e.retry_after = Some(d.retry_after());
+        e
+    }
+}
+
 impl From<PolicyError> for ApiError {
     fn from(e: PolicyError) -> Self {
         match e {

@@ -15,6 +15,7 @@ pub mod error;
 pub mod jobs;
 pub mod model;
 pub mod prober;
+pub mod ratelimit;
 
 #[cfg(test)]
 mod testing;

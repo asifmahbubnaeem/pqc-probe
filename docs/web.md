@@ -56,3 +56,26 @@ page, security headers, the threat-model document.
 Probing connects to the target several times. OpenSSH 9.8+ servers penalize sources that
 connect and drop before authenticating (`PerSourcePenalties`) and may refuse this service's IP
 for a while. The SSH probe is paced for that reason; keep the per-target limits in place.
+
+## Rate limits
+
+Every client is limited by address (IPv6 clients by /64):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PQC_WEB_IP_BURST` | 5 | requests a client may make back to back |
+| `PQC_WEB_IP_PER_MINUTE` | 6 | steady refill rate |
+| `PQC_WEB_IP_MAX_INFLIGHT` | 2 | probes of one client queued or running |
+| `PQC_WEB_IP_PER_DAY` | 60 | probes per client in 24 hours |
+| `PQC_WEB_TARGET_COOLDOWN_SECS` | 60 | a repeat request for the same target gets the earlier job back (`"reused": true`) instead of probing again; 0 turns it off |
+| `PQC_WEB_TRUSTED_PROXIES` | none | comma-separated proxy IPs whose `X-Forwarded-For` is believed |
+| `PQC_WEB_PROBE_TIMEOUT_SECS` | 15 | timeout of each connection a probe makes |
+
+Over a limit the service answers `429` with code `rate_limited` and a `Retry-After` header.
+Requests answered from the cooldown do not count against the client. `X-Forwarded-For` is
+read from the right and only when the direct peer is a trusted proxy; behind a reverse proxy
+set `PQC_WEB_TRUSTED_PROXIES` to its address, otherwise every client looks like the proxy.
+
+Known limits: the cooldown matches the target as written (lower-cased), not the resolved
+address, so two spellings of one host are separate entries and are only held back by the
+per-client limits. `GET` requests are not rate limited yet.
