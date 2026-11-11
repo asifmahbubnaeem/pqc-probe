@@ -12,6 +12,7 @@
 //! IPv4 only: the probes pass `-4` (broken IPv6 stalls), so only A records are considered.
 
 use crate::Target;
+use dns_lookup::{getaddrinfo, AddrInfoHints, LookupErrorKind};
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::Duration;
 use thiserror::Error;
@@ -25,6 +26,8 @@ pub enum PolicyError {
     PortNotAllowed(u16, String),
     #[error("'{0}' has no IPv4 address")]
     NoAddress(String),
+    #[error("'{0}' does not exist (no such host in DNS)")]
+    UnknownHost(String),
     #[error("DNS lookup for '{0}' failed: {1}")]
     ResolveFailed(String, String),
     #[error("'{host}' resolves to {ip}, which is not allowed ({reason})")]
@@ -189,22 +192,61 @@ pub fn check_resolved(
     Ok(Target::new(host, port).with_resolved(first))
 }
 
-/// Resolve `host` to its IPv4 addresses. Each attempt has a 5 s limit and a failed or timed-out
-/// attempt is tried once more: on networks with broken IPv6 the first lookup of an uncached name
-/// can outlive the limit (getaddrinfo also waits for AAAA), while the retry finds the late answer
-/// in the resolver's cache.
-pub async fn resolve_ipv4(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, PolicyError> {
-    retry_lookup(2, || lookup_once(host, port)).await
+/// `AF_INET`: 2 on Linux, macOS, the BSDs and Windows.
+const AF_INET: i32 = 2;
+
+/// Resolve `host` to its IPv4 addresses.
+///
+/// Asks the system resolver (`getaddrinfo`) for IPv4 only. Tokio's own lookup asks for every
+/// family, so it also waits for the AAAA answer, which stalls for seconds on networks with broken
+/// IPv6 DNS. The call blocks, so it runs on a blocking thread; each attempt has a 5 s limit (the
+/// thread itself finishes whenever the resolver gives up). A timeout or "temporary failure" is
+/// tried once more; a host that does not exist is final at once. `port` is not needed to resolve
+/// and is kept so callers do not change.
+pub async fn resolve_ipv4(host: &str, _port: u16) -> Result<Vec<Ipv4Addr>, PolicyError> {
+    retry_lookup(2, || lookup_once(host)).await
 }
 
-async fn lookup_once(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, PolicyError> {
-    let lookup = tokio::net::lookup_host((host, port));
-    let found = tokio::time::timeout(Duration::from_secs(5), lookup)
-        .await
-        .map_err(|_| PolicyError::ResolveFailed(host.to_string(), "timed out after 5s".into()))?
-        .map_err(|e| PolicyError::ResolveFailed(host.to_string(), e.to_string()))?;
+/// One failed lookup attempt and whether trying again could help.
+#[derive(Debug)]
+struct LookupFailure {
+    error: PolicyError,
+    retry: bool,
+}
+
+async fn lookup_once(host: &str) -> Result<Vec<Ipv4Addr>, LookupFailure> {
+    let name = host.to_string();
+    let task = tokio::task::spawn_blocking(move || lookup_blocking(&name));
+    match tokio::time::timeout(Duration::from_secs(5), task).await {
+        Err(_) => Err(LookupFailure {
+            error: PolicyError::ResolveFailed(host.to_string(), "timed out after 5s".into()),
+            retry: true,
+        }),
+        Ok(Err(join_error)) => Err(LookupFailure {
+            error: PolicyError::ResolveFailed(
+                host.to_string(),
+                format!("lookup task: {join_error}"),
+            ),
+            retry: false,
+        }),
+        Ok(Ok(result)) => result,
+    }
+}
+
+fn lookup_blocking(host: &str) -> Result<Vec<Ipv4Addr>, LookupFailure> {
+    let hints = AddrInfoHints {
+        address: AF_INET,
+        ..AddrInfoHints::default()
+    };
+    let found = match getaddrinfo(Some(host), None, Some(hints)) {
+        Ok(it) => it,
+        Err(e) => {
+            let kind = e.kind();
+            return interpret_lookup_error(host, kind, &format!("resolver error: {kind:?}"));
+        }
+    };
     let mut v4: Vec<Ipv4Addr> = found
-        .filter_map(|a| match a.ip() {
+        .filter_map(|r| match r.ok()?.sockaddr.ip() {
             IpAddr::V4(ip) => Some(ip),
             IpAddr::V6(_) => None,
         })
@@ -214,17 +256,39 @@ async fn lookup_once(host: &str, port: u16) -> Result<Vec<Ipv4Addr>, PolicyError
     Ok(v4)
 }
 
-/// Run `f` up to `attempts` times, retrying only when it fails with `ResolveFailed`.
+/// What a resolver error means. "No data" is an answer (the name exists but has no IPv4
+/// address: an empty list, reported later as `NoAddress`); "no name" is a definite no; a
+/// temporary failure may be worth one more try; anything else is a plain failure.
+fn interpret_lookup_error(
+    host: &str,
+    kind: LookupErrorKind,
+    message: &str,
+) -> Result<Vec<Ipv4Addr>, LookupFailure> {
+    match kind {
+        LookupErrorKind::NoData => Ok(Vec::new()),
+        LookupErrorKind::NoName => Err(LookupFailure {
+            error: PolicyError::UnknownHost(host.to_string()),
+            retry: false,
+        }),
+        other => Err(LookupFailure {
+            error: PolicyError::ResolveFailed(host.to_string(), message.to_string()),
+            retry: matches!(other, LookupErrorKind::Again),
+        }),
+    }
+}
+
+/// Run `f` up to `attempts` times, repeating only after a failure marked retryable.
 async fn retry_lookup<F, Fut>(attempts: usize, mut f: F) -> Result<Vec<Ipv4Addr>, PolicyError>
 where
     F: FnMut() -> Fut,
-    Fut: std::future::Future<Output = Result<Vec<Ipv4Addr>, PolicyError>>,
+    Fut: std::future::Future<Output = Result<Vec<Ipv4Addr>, LookupFailure>>,
 {
     let mut last = None;
     for _ in 0..attempts.max(1) {
         match f().await {
-            Err(e @ PolicyError::ResolveFailed(..)) => last = Some(e),
-            other => return other,
+            Ok(addrs) => return Ok(addrs),
+            Err(LookupFailure { error, retry: true }) => last = Some(error),
+            Err(LookupFailure { error, .. }) => return Err(error),
         }
     }
     Err(last.expect("at least one attempt was made"))
@@ -246,22 +310,22 @@ mod policy_tests {
         s.parse().unwrap()
     }
 
-    fn failing() -> Result<Vec<Ipv4Addr>, PolicyError> {
-        Err(PolicyError::ResolveFailed(
-            "a.test".into(),
-            "timed out".into(),
-        ))
+    fn timed_out() -> LookupFailure {
+        LookupFailure {
+            error: PolicyError::ResolveFailed("a.test".into(), "timed out".into()),
+            retry: true,
+        }
     }
 
     #[tokio::test]
-    async fn lookup_is_retried_once_after_a_failure() {
+    async fn a_timeout_is_retried_once() {
         let calls = std::cell::Cell::new(0);
         let r = retry_lookup(2, || {
             calls.set(calls.get() + 1);
             let first = calls.get() == 1;
             async move {
                 if first {
-                    failing()
+                    Err(timed_out())
                 } else {
                     Ok(vec![Ipv4Addr::new(93, 184, 216, 34)])
                 }
@@ -277,11 +341,23 @@ mod policy_tests {
         let calls = std::cell::Cell::new(0);
         let r = retry_lookup(2, || {
             calls.set(calls.get() + 1);
-            async { failing() }
+            async { Err(timed_out()) }
         })
         .await;
         assert!(matches!(r, Err(PolicyError::ResolveFailed(..))));
         assert_eq!(calls.get(), 2);
+    }
+
+    #[tokio::test]
+    async fn a_missing_host_is_final_and_not_retried() {
+        let calls = std::cell::Cell::new(0);
+        let r = retry_lookup(2, || {
+            calls.set(calls.get() + 1);
+            async { interpret_lookup_error("nx.test", LookupErrorKind::NoName, "no such name") }
+        })
+        .await;
+        assert!(matches!(r, Err(PolicyError::UnknownHost(h)) if h == "nx.test"));
+        assert_eq!(calls.get(), 1);
     }
 
     #[tokio::test]
@@ -294,6 +370,38 @@ mod policy_tests {
         .await;
         assert!(r.unwrap().is_empty());
         assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
+    fn resolver_errors_are_interpreted_by_kind() {
+        // The name exists but has no IPv4 address: an empty answer, not an error.
+        assert!(interpret_lookup_error("h", LookupErrorKind::NoData, "x")
+            .unwrap()
+            .is_empty());
+        let missing = interpret_lookup_error("h", LookupErrorKind::NoName, "x")
+            .err()
+            .unwrap();
+        assert!(matches!(missing.error, PolicyError::UnknownHost(_)) && !missing.retry);
+        let again = interpret_lookup_error("h", LookupErrorKind::Again, "try later")
+            .err()
+            .unwrap();
+        assert!(matches!(again.error, PolicyError::ResolveFailed(..)) && again.retry);
+        for kind in [
+            LookupErrorKind::Fail,
+            LookupErrorKind::System,
+            LookupErrorKind::Memory,
+        ] {
+            let f = interpret_lookup_error("h", kind, "boom").err().unwrap();
+            assert!(matches!(f.error, PolicyError::ResolveFailed(..)) && !f.retry);
+        }
+    }
+
+    #[tokio::test]
+    async fn numeric_hosts_resolve_without_dns() {
+        assert_eq!(
+            resolve_ipv4("192.0.2.7", 443).await.unwrap(),
+            vec![Ipv4Addr::new(192, 0, 2, 7)]
+        );
     }
 
     #[test]

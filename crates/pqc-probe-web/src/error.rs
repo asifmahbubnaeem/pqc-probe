@@ -94,6 +94,12 @@ impl From<PolicyError> for ApiError {
                 format!("port {port} is not allowed on this service"),
             )
             .with_hint(format!("Allowed ports: {allowed}")),
+            PolicyError::UnknownHost(_) => Self::new(
+                StatusCode::BAD_REQUEST,
+                "unknown_host",
+                "the target host name does not exist",
+            )
+            .with_hint("Check the spelling of the host name."),
             PolicyError::NoAddress(_) => Self::new(
                 StatusCode::BAD_REQUEST,
                 "unresolvable_target",
@@ -146,6 +152,9 @@ mod tests {
 
     #[test]
     fn lookup_failure_and_missing_ipv4_are_told_apart() {
+        let missing: ApiError = PolicyError::UnknownHost("nx.test".into()).into();
+        assert_eq!(missing.code, "unknown_host");
+        assert!(missing.message.contains("does not exist"));
         let none: ApiError = PolicyError::NoAddress("a.test".into()).into();
         let failed: ApiError =
             PolicyError::ResolveFailed("a.test".into(), "internal-dns.corp refused".into()).into();
