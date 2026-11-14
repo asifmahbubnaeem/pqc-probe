@@ -28,6 +28,14 @@ pub struct RateLimits {
     pub target_cooldown: Duration,
     /// Reverse proxies whose `X-Forwarded-For` header is believed.
     pub trusted_proxies: Vec<IpAddr>,
+    /// Status and report requests a client may make back to back.
+    pub poll_burst: u32,
+    /// Steady rate of those requests.
+    pub poll_per_minute: u32,
+    /// Probes any clients together may start against one server address back to back.
+    pub target_burst: u32,
+    /// Steady rate of probes against one server address.
+    pub target_per_minute: u32,
 }
 
 impl Default for RateLimits {
@@ -39,6 +47,51 @@ impl Default for RateLimits {
             per_day: 60,
             target_cooldown: Duration::from_secs(60),
             trusted_proxies: Vec::new(),
+            poll_burst: 60,
+            poll_per_minute: 120,
+            target_burst: 6,
+            target_per_minute: 12,
+        }
+    }
+}
+
+impl RateLimits {
+    /// Limits for status and report polling: a token bucket only.
+    pub fn for_polling(&self) -> RateLimits {
+        RateLimits {
+            burst: self.poll_burst,
+            per_minute: self.poll_per_minute,
+            max_inflight: u32::MAX,
+            per_day: u32::MAX,
+            ..self.clone()
+        }
+    }
+
+    /// Limits for how often one server address is probed, whoever asks: a token bucket only.
+    pub fn for_targets(&self) -> RateLimits {
+        RateLimits {
+            burst: self.target_burst,
+            per_minute: self.target_per_minute,
+            max_inflight: u32::MAX,
+            per_day: u32::MAX,
+            ..self.clone()
+        }
+    }
+
+    /// Limits that never get in the way, for tests that are about something else.
+    #[cfg(test)]
+    pub fn relaxed() -> Self {
+        Self {
+            burst: 1000,
+            per_minute: 6000,
+            max_inflight: 1000,
+            per_day: 100_000,
+            target_cooldown: Duration::ZERO,
+            trusted_proxies: Vec::new(),
+            poll_burst: 100_000,
+            poll_per_minute: 60_000,
+            target_burst: 100_000,
+            target_per_minute: 60_000,
         }
     }
 }
@@ -418,6 +471,47 @@ mod tests {
             client_ip(ip("10.0.0.1"), Some("not-an-ip, 10.0.0.2"), &trusted),
             ip("10.0.0.1"),
             "an unparseable header is ignored"
+        );
+    }
+
+    #[test]
+    fn polling_and_target_limits_are_token_buckets_only() {
+        let d = RateLimits::default();
+        assert_eq!(
+            (
+                d.poll_burst,
+                d.poll_per_minute,
+                d.target_burst,
+                d.target_per_minute
+            ),
+            (60, 120, 6, 12)
+        );
+        let l = RateLimits {
+            poll_burst: 3,
+            poll_per_minute: 6,
+            target_burst: 2,
+            target_per_minute: 6,
+            ..RateLimits::default()
+        };
+        let t0 = Instant::now();
+        let a = ip("198.51.100.1");
+
+        let poll = IpLimiter::new(l.for_polling());
+        // No in-flight cap: all three can be held at once.
+        let held: Vec<_> = (0..3).map(|_| poll.try_start(a, t0).unwrap()).collect();
+        assert!(matches!(poll.try_start(a, t0), Err(Denied::TooFast { .. })));
+        drop(held);
+
+        let target = IpLimiter::new(l.for_targets());
+        drop(target.try_start(a, t0).unwrap());
+        drop(target.try_start(a, t0).unwrap());
+        assert!(matches!(
+            target.try_start(a, t0),
+            Err(Denied::TooFast { .. })
+        ));
+        assert!(
+            target.try_start(ip("198.51.100.2"), t0).is_ok(),
+            "other addresses are separate"
         );
     }
 }

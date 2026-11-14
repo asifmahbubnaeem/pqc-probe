@@ -116,6 +116,22 @@ impl Config {
                 )
             })?;
         }
+        for (name, field, hi) in [
+            ("PQC_WEB_POLL_BURST", 0usize, 10_000u64),
+            ("PQC_WEB_POLL_PER_MINUTE", 1, 60_000),
+            ("PQC_WEB_TARGET_BURST", 2, 1000),
+            ("PQC_WEB_TARGET_PER_MINUTE", 3, 6000),
+        ] {
+            if let Some(v) = get(name) {
+                let n = parse_in_range(name, &v, 1, hi)? as u32;
+                match field {
+                    0 => c.limits.poll_burst = n,
+                    1 => c.limits.poll_per_minute = n,
+                    2 => c.limits.target_burst = n,
+                    _ => c.limits.target_per_minute = n,
+                }
+            }
+        }
         if c.queue_limit < c.max_concurrent {
             return Err(format!(
                 "PQC_WEB_QUEUE_LIMIT ({}) must be at least PQC_WEB_MAX_CONCURRENT ({})",
@@ -378,6 +394,33 @@ mod tests {
         ] {
             let err = cfg(&[(k, v)]).unwrap_err();
             assert!(err.contains(k), "{err}");
+        }
+    }
+
+    #[test]
+    fn poll_and_target_limits_can_be_overridden_and_are_validated() {
+        let c = cfg(&[
+            ("PQC_WEB_POLL_BURST", "10"),
+            ("PQC_WEB_POLL_PER_MINUTE", "20"),
+            ("PQC_WEB_TARGET_BURST", "3"),
+            ("PQC_WEB_TARGET_PER_MINUTE", "4"),
+        ])
+        .unwrap();
+        assert_eq!(
+            (
+                c.limits.poll_burst,
+                c.limits.poll_per_minute,
+                c.limits.target_burst,
+                c.limits.target_per_minute
+            ),
+            (10, 20, 3, 4)
+        );
+        for (k, v) in [
+            ("PQC_WEB_POLL_BURST", "0"),
+            ("PQC_WEB_TARGET_BURST", "5000"),
+            ("PQC_WEB_TARGET_PER_MINUTE", "x"),
+        ] {
+            assert!(cfg(&[(k, v)]).unwrap_err().contains(k));
         }
     }
 

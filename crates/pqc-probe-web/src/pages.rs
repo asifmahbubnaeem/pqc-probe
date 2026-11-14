@@ -2,7 +2,7 @@
 //! The form posts to the same submit path as the JSON API, so rate limits, policy and the
 //! cooldown apply identically.
 
-use crate::api::{submit, AppState, ClientIp};
+use crate::api::{check_poll, submit, AppState, ClientIp};
 use crate::html::{self, FormValues};
 use crate::jobs::ReportLookup;
 use crate::model::{is_valid_job_id, JobStatus, ProbeRequest};
@@ -172,7 +172,25 @@ pub async fn submit_form(
     }
 }
 
-pub async fn job_page(State(st): State<AppState>, Path(id): Path<String>) -> Response {
+pub async fn job_page(
+    State(st): State<AppState>,
+    ClientIp(ip): ClientIp,
+    Path(id): Path<String>,
+) -> Response {
+    if let Err(e) = check_poll(&st, ip) {
+        let mut resp = html_response(
+            e.status,
+            html::error_page(
+                "Too many requests",
+                "You are checking too often. Wait a moment and reload.",
+            ),
+        );
+        if let Some(secs) = e.retry_after {
+            resp.headers_mut()
+                .insert(header::RETRY_AFTER, HeaderValue::from(secs));
+        }
+        return resp;
+    }
     let not_found = || {
         html_response(
             StatusCode::NOT_FOUND,
@@ -230,21 +248,24 @@ mod tests {
     use tower::ServiceExt;
 
     fn app(prober: Arc<dyn crate::prober::Prober>) -> axum::Router {
-        let config = Config {
+        app_with(prober, |_| {})
+    }
+
+    fn app_with(
+        prober: Arc<dyn crate::prober::Prober>,
+        tweak: impl FnOnce(&mut Config),
+    ) -> axum::Router {
+        let mut config = Config {
             job_timeout: Duration::from_secs(5),
-            limits: RateLimits {
-                burst: 1000,
-                per_minute: 6000,
-                max_inflight: 1000,
-                per_day: 100_000,
-                target_cooldown: Duration::ZERO,
-                trusted_proxies: vec![],
-            },
+            limits: RateLimits::relaxed(),
             ..Config::default()
         };
+        tweak(&mut config);
         router(AppState {
             store: JobStore::new(&config),
             limiter: IpLimiter::new(config.limits.clone()),
+            poll_limiter: IpLimiter::new(config.limits.for_polling()),
+            target_limiter: IpLimiter::new(config.limits.for_targets()),
             config: Arc::new(config),
             prober,
             resolver: Arc::new(FakeResolver),
@@ -430,5 +451,19 @@ mod tests {
         }
         assert!(body.contains("the server hung up"), "{body}");
         assert!(body.contains("failed"));
+    }
+
+    #[tokio::test]
+    async fn the_result_page_has_a_polling_budget_and_says_so_in_html() {
+        let app = app_with(FakeProber::ok(), |c| {
+            c.limits.poll_burst = 1;
+            c.limits.poll_per_minute = 6;
+        });
+        let (s, _, _) = call(&app, get("/probes/0123456789abcdef0123456789abcdef")).await;
+        assert_eq!(s, StatusCode::NOT_FOUND);
+        let (s, h, body) = call(&app, get("/probes/0123456789abcdef0123456789abcdef")).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert!(h.get("retry-after").is_some());
+        assert!(body.contains("Too many requests"));
     }
 }

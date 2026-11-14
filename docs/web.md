@@ -69,6 +69,8 @@ Every client is limited by address (IPv6 clients by /64):
 | `PQC_WEB_IP_PER_DAY` | 60 | probes per client in 24 hours |
 | `PQC_WEB_TARGET_COOLDOWN_SECS` | 60 | a repeat request for the same target gets the earlier job back (`"reused": true`) instead of probing again; 0 turns it off |
 | `PQC_WEB_TRUSTED_PROXIES` | none | comma-separated proxy IPs whose `X-Forwarded-For` is believed |
+| `PQC_WEB_POLL_BURST` / `PQC_WEB_POLL_PER_MINUTE` | 60 / 120 | status, report and result-page requests per client |
+| `PQC_WEB_TARGET_BURST` / `PQC_WEB_TARGET_PER_MINUTE` | 6 / 12 | probes against one server address across all clients, whatever name was used (`429 target_busy`) |
 | `PQC_WEB_PROBE_TIMEOUT_SECS` | 15 | timeout of each connection a probe makes |
 
 Over a limit the service answers `429` with code `rate_limited` and a `Retry-After` header.
@@ -76,9 +78,10 @@ Requests answered from the cooldown do not count against the client. `X-Forwarde
 read from the right and only when the direct peer is a trusted proxy; behind a reverse proxy
 set `PQC_WEB_TRUSTED_PROXIES` to its address, otherwise every client looks like the proxy.
 
-Known limits: the cooldown matches the target as written (lower-cased), not the resolved
-address, so two spellings of one host are separate entries and are only held back by the
-per-client limits. `GET` requests are not rate limited yet.
+Known limits: the cooldown that returns an earlier job matches the target as written
+(lower-cased, one trailing dot removed). It is deliberately not keyed on the resolved address,
+because many sites share one address and would get each other's reports. Aliases of one server
+are instead held back by the per-address limit above.
 
 ## Web interface
 

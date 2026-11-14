@@ -79,6 +79,20 @@ impl ApiError {
     }
 }
 
+impl ApiError {
+    /// The server address itself has been probed too often lately, by anyone.
+    pub fn target_busy(retry_after: u64) -> Self {
+        let mut e = Self::new(
+            StatusCode::TOO_MANY_REQUESTS,
+            "target_busy",
+            "this server has been probed too often recently; try again later",
+        )
+        .with_hint("Results of recent probes stay available under their probe ids.");
+        e.retry_after = Some(retry_after);
+        e
+    }
+}
+
 impl From<PolicyError> for ApiError {
     fn from(e: PolicyError) -> Self {
         match e {

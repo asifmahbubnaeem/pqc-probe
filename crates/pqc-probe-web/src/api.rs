@@ -14,7 +14,7 @@ use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use pqc_probe_core::policy::Policy;
+use pqc_probe_core::policy::{check_resolved, Policy};
 use pqc_probe_core::{ModeSelection, ProtocolSelection, SCHEMA_VERSION};
 use serde_json::json;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
@@ -33,6 +33,10 @@ pub struct AppState {
     pub prober: Arc<dyn Prober>,
     pub resolver: Arc<dyn Resolver>,
     pub limiter: Arc<IpLimiter>,
+    /// Status and report polling, per client.
+    pub poll_limiter: Arc<IpLimiter>,
+    /// Probes per server address, across all clients.
+    pub target_limiter: Arc<IpLimiter>,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -132,8 +136,16 @@ fn dedupe_key(
 ) -> String {
     format!(
         "{}|{protocol:?}|{mode:?}|{tls_port:?}|{ssh_port:?}",
-        host.to_ascii_lowercase()
+        host.strip_suffix('.').unwrap_or(host).to_ascii_lowercase()
     )
+}
+
+/// Count one status or report request against the client's polling budget.
+pub(crate) fn check_poll(st: &AppState, ip: IpAddr) -> Result<(), ApiError> {
+    st.poll_limiter
+        .try_start(ip, Instant::now())
+        .map(drop)
+        .map_err(|d| ApiError::rate_limited(&d))
 }
 
 fn created_response(st: &AppState, id: String, reused: bool) -> Response {
@@ -262,9 +274,34 @@ pub(crate) async fn submit(
         None => None,
     };
     let ssh = match ssh_port {
-        Some(p) => Some(st.resolver.prepare(&host, p, &policy).await?),
+        // The host was already resolved and checked for TLS: reuse that answer (the port is
+        // still checked), so one request costs one lookup and both probes use the same address.
+        Some(p) => match tls.as_ref().and_then(|t| match t.resolved {
+            Some(IpAddr::V4(v4)) => Some(v4),
+            _ => None,
+        }) {
+            Some(v4) => Some(check_resolved(&host, p, &[v4], &policy)?),
+            None => Some(st.resolver.prepare(&host, p, &policy).await?),
+        },
         None => None,
     };
+
+    // Be polite to the server itself, whatever name reached it: a limit per address shared by
+    // all clients, so varying the spelling or using an alias does not multiply the load.
+    let mut addrs: Vec<IpAddr> = [tls.as_ref(), ssh.as_ref()]
+        .into_iter()
+        .flatten()
+        .filter_map(|t| t.resolved)
+        .collect();
+    addrs.sort();
+    addrs.dedup();
+    for addr in addrs {
+        drop(
+            st.target_limiter
+                .try_start(addr, Instant::now())
+                .map_err(|d| ApiError::target_busy(d.retry_after()))?,
+        );
+    }
 
     let job = ProbeJob {
         request: req,
@@ -284,8 +321,10 @@ pub(crate) async fn submit(
 
 async fn get_probe(
     State(st): State<AppState>,
+    ClientIp(ip): ClientIp,
     Path(id): Path<String>,
 ) -> Result<Response, ApiError> {
+    check_poll(&st, ip)?;
     if !is_valid_job_id(&id) {
         return Err(ApiError::not_found());
     }
@@ -297,8 +336,10 @@ async fn get_probe(
 
 async fn get_report(
     State(st): State<AppState>,
+    ClientIp(ip): ClientIp,
     Path(id): Path<String>,
 ) -> Result<Response, ApiError> {
+    check_poll(&st, ip)?;
     if !is_valid_job_id(&id) {
         return Err(ApiError::not_found());
     }
@@ -350,13 +391,45 @@ mod tests {
     use tower::ServiceExt;
 
     fn state(config: Config, prober: Arc<dyn Prober>) -> AppState {
+        state_with(config, prober, Arc::new(FakeResolver))
+    }
+
+    fn state_with(
+        config: Config,
+        prober: Arc<dyn Prober>,
+        resolver: Arc<dyn Resolver>,
+    ) -> AppState {
         AppState {
             store: JobStore::new(&config),
             limiter: IpLimiter::new(config.limits.clone()),
+            poll_limiter: IpLimiter::new(config.limits.for_polling()),
+            target_limiter: IpLimiter::new(config.limits.for_targets()),
             config: Arc::new(config),
             prober,
-            resolver: Arc::new(FakeResolver),
+            resolver,
         }
+    }
+
+    /// A resolver that counts how often it is asked.
+    struct CountingResolver(std::sync::atomic::AtomicUsize);
+
+    impl Resolver for CountingResolver {
+        fn prepare<'a>(
+            &'a self,
+            host: &'a str,
+            port: u16,
+            policy: &'a Policy,
+        ) -> crate::prober::BoxFuture<'a, Result<pqc_probe_core::Target, pqc_probe_core::PolicyError>>
+        {
+            self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            FakeResolver.prepare(host, port, policy)
+        }
+    }
+
+    fn config_with(tweak: impl FnOnce(&mut crate::ratelimit::RateLimits)) -> Config {
+        let mut c = small_config();
+        tweak(&mut c.limits);
+        c
     }
 
     fn small_config() -> Config {
@@ -365,14 +438,7 @@ mod tests {
             queue_limit: 10,
             job_timeout: Duration::from_secs(5),
             result_ttl: Duration::from_secs(60),
-            limits: crate::ratelimit::RateLimits {
-                burst: 1000,
-                per_minute: 6000,
-                max_inflight: 1000,
-                per_day: 100_000,
-                target_cooldown: Duration::ZERO,
-                trusted_proxies: vec![],
-            },
+            limits: crate::ratelimit::RateLimits::relaxed(),
             tools: crate::config::ToolPaths {
                 openssl_oqs: Some("openssl-oqs".into()),
                 ssh_oqs: Some("ssh-oqs".into()),
@@ -689,6 +755,7 @@ mod tests {
                 per_day: 1000,
                 target_cooldown: Duration::from_secs(cooldown),
                 trusted_proxies: proxies.iter().map(|p| p.parse().unwrap()).collect(),
+                ..crate::ratelimit::RateLimits::relaxed()
             },
             ..small_config()
         }
@@ -771,5 +838,97 @@ mod tests {
         )
         .await;
         assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    #[tokio::test]
+    async fn both_protocols_cost_one_dns_lookup() {
+        let counter = Arc::new(CountingResolver(Default::default()));
+        let app = router(state_with(
+            small_config(),
+            FakeProber::ok(),
+            counter.clone(),
+        ));
+        let (s, _, _) = send(
+            &app,
+            post_json(r#"{"target":"example.test","protocol":"both"}"#),
+        )
+        .await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        assert_eq!(counter.0.load(std::sync::atomic::Ordering::SeqCst), 1);
+        let (s, _, _) = send(
+            &app,
+            post_json(r#"{"target":"example.test","protocol":"ssh"}"#),
+        )
+        .await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        assert_eq!(
+            counter.0.load(std::sync::atomic::Ordering::SeqCst),
+            2,
+            "one more for a single-protocol request"
+        );
+    }
+
+    #[tokio::test]
+    async fn the_reused_resolution_still_obeys_the_port_allowlist() {
+        let app = router(state(small_config(), FakeProber::ok()));
+        let (s, _, v) = send(
+            &app,
+            post_json(r#"{"target":"example.test","protocol":"both","ssh_port":25}"#),
+        )
+        .await;
+        assert_eq!(s, StatusCode::BAD_REQUEST);
+        assert_eq!(v["error"]["code"], "port_not_allowed");
+    }
+
+    #[tokio::test]
+    async fn spellings_of_one_host_share_the_cooldown() {
+        let cfg = config_with(|l| l.target_cooldown = Duration::from_secs(60));
+        let app = router(state(cfg, FakeProber::ok()));
+        let (_, _, a) = send(&app, post_json(r#"{"target":"example.test."}"#)).await;
+        let (_, _, b) = send(&app, post_json(r#"{"target":"EXAMPLE.test"}"#)).await;
+        assert_eq!(a["reused"], false);
+        assert_eq!(b["reused"], true);
+        assert_eq!(a["id"], b["id"]);
+    }
+
+    #[tokio::test]
+    async fn one_server_address_is_not_probed_more_than_its_budget_whatever_the_name() {
+        // All fake hosts share one address, like names behind one CDN.
+        let cfg = config_with(|l| {
+            l.target_burst = 2;
+            l.target_per_minute = 6;
+        });
+        let app = router(state(cfg, FakeProber::ok()));
+        for name in ["a.test", "b.test"] {
+            let body = format!(r#"{{"target":"{name}"}}"#);
+            let (s, _, _) = send(&app, post_json(&body)).await;
+            assert_eq!(s, StatusCode::ACCEPTED, "{name}");
+        }
+        let (s, h, v) = send(&app, post_json(r#"{"target":"c.test"}"#)).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(v["error"]["code"], "target_busy");
+        assert!(h.get("retry-after").is_some());
+    }
+
+    #[tokio::test]
+    async fn polling_has_its_own_budget() {
+        let cfg = config_with(|l| {
+            l.poll_burst = 2;
+            l.poll_per_minute = 6;
+        });
+        let app = router(state(cfg, FakeProber::ok()));
+        let (_, _, v) = send(&app, post_json(BODY)).await;
+        let uri = format!("/api/v1/probes/{}", v["id"].as_str().unwrap());
+        for _ in 0..2 {
+            let (s, _, _) = send(&app, get_req(&uri)).await;
+            assert_eq!(s, StatusCode::OK);
+        }
+        let (s, h, v) = send(&app, get_req(&uri)).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(v["error"]["code"], "rate_limited");
+        assert!(h.get("retry-after").is_some());
+        // Submitting is a different budget.
+        let (s, _, _) = send(&app, post_json(r#"{"target":"other.test"}"#)).await;
+        assert_eq!(s, StatusCode::ACCEPTED);
     }
 }

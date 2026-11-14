@@ -22,6 +22,10 @@ async fn main() -> Result<()> {
     store.spawn_sweeper();
     let limiter = IpLimiter::new(config.limits.clone());
     limiter.spawn_pruner();
+    let poll_limiter = IpLimiter::new(config.limits.for_polling());
+    poll_limiter.spawn_pruner();
+    let target_limiter = IpLimiter::new(config.limits.for_targets());
+    target_limiter.spawn_pruner();
 
     let bind = config.bind;
     let prober = CliProber::new(config.tools.clone(), config.probe_timeout);
@@ -31,6 +35,8 @@ async fn main() -> Result<()> {
         prober: Arc::new(prober),
         resolver: Arc::new(SystemResolver),
         limiter,
+        poll_limiter,
+        target_limiter,
     };
 
     let listener = tokio::net::TcpListener::bind(bind).await?;
