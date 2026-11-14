@@ -1,0 +1,17 @@
+# OpenSSL configuration for the experimental stack: the default provider plus oqs-provider.
+# Used only through the openssl-oqs wrapper; the system openssl keeps its own configuration.
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+oqsprovider = oqsprovider_sect
+
+[default_sect]
+activate = 1
+
+[oqsprovider_sect]
+module = /opt/oqs-provider/oqsprovider.so
+activate = 1

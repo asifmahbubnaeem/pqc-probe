@@ -1,0 +1,11 @@
+# Only Cargo.toml, Cargo.lock, crates/ and docker/ are needed to build the image.
+.git
+target
+scratch
+results
+pqc-probe-week4-kit
+docs
+.venv
+*.log
+.env
+.env.local

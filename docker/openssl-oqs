@@ -1,0 +1,3 @@
+#!/bin/sh
+# The system openssl with oqs-provider loaded (see /etc/pqc-probe/openssl-oqs.cnf).
+exec env OPENSSL_CONF=/etc/pqc-probe/openssl-oqs.cnf /usr/bin/openssl "$@"
