@@ -5,6 +5,11 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["post-quantum", "pqc", "tls", "ssh", "ml-kem"]
+categories = ["cryptography", "network-programming"]
 description = "Core probe logic: detects PQ algorithms on TLS and SSH endpoints"
 
 [dependencies]

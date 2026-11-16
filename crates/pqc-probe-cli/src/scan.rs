@@ -1,8 +1,5 @@
 //! Batch scanner for Phase 6: read a CSV of domains, probe each on :443, write results CSV.
 //! Parallel with a configurable concurrency limit. Resumable — skips domains already in output.
-//!
-//! Save as `crates/pqc-probe-cli/src/scan.rs`.
-//! Register in `main.rs` with `mod scan;` and wire the `Scan` subcommand.
 
 use anyhow::{Context, Result};
 use pqc_probe_core::{probe, KemResult, ProbeMode, ProbeOptions, Target};

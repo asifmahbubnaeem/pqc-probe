@@ -1,10 +1,15 @@
 [package]
-name = "pqc-probe-cli"
+name = "pqc-probe"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["post-quantum", "pqc", "tls", "ssh", "ml-kem"]
+categories = ["command-line-utilities", "cryptography", "network-programming"]
 description = "CLI for pqc-probe: detect post-quantum crypto on TLS and SSH endpoints"
 
 [[bin]]
@@ -14,7 +19,7 @@ path = "src/main.rs"
 [dependencies]
 serde.workspace = true
 csv.workspace = true
-pqc-probe-core = { path = "../pqc-probe-core" }
+pqc-probe-core.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 serde_json.workspace = true

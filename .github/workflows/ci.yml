@@ -12,16 +12,34 @@ jobs:
   rust:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Toolchain
         run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --all --locked
 
+  msrv:
+    # rust-version in Cargo.toml; a dependency raising its own minimum shows up here first.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Toolchain 1.89
+        run: rustup toolchain install 1.89 --profile minimal
+      - run: cargo +1.89 check --all --all-targets --locked
+
+  package:
+    # The crates.io packages build on their own (licenses, readme, versioned dependencies).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: cargo package --workspace --locked
+
   action:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Action script tests (fake docker, no network)
         run: action/test.sh

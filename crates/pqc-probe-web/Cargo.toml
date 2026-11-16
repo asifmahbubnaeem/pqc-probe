@@ -5,6 +5,11 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["post-quantum", "pqc", "tls", "ssh", "web"]
+categories = ["web-programming::http-server", "cryptography"]
 description = "Web service for pqc-probe: submit a target, poll the job, fetch the JSON report"
 
 [lib]
@@ -16,7 +21,7 @@ name = "pqc-probe-web"
 path = "src/main.rs"
 
 [dependencies]
-pqc-probe-core = { path = "../pqc-probe-core" }
+pqc-probe-core.workspace = true
 anyhow.workspace = true
 axum = "0.8"
 serde.workspace = true

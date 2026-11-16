@@ -10,7 +10,7 @@ pub mod policy;
 pub mod report;
 pub mod ssh;
 
-// Re-export at crate root so pqc-probe-cli can `use pqc_probe_core::{SshReport, ...}`.
+// Re-exported at the crate root so users can `use pqc_probe_core::{SshReport, ...}`.
 pub use policy::{check_resolved, prepare_target, Policy, PolicyError};
 pub use report::{
     ModeSelection, ProtocolSelection, Report, ReportTarget, RequestInfo, SshClientResult,

@@ -1,5 +1,4 @@
-// Replace crates/pqc-probe-cli/src/main.rs with this.
-// Adds --protocol flag (tls | ssh | both), SSH probing, SSH dual-mode diff output.
+//! pqc-probe: report which post-quantum algorithms a server supports over TLS and SSH.
 mod scan;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};

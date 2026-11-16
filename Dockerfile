@@ -21,7 +21,7 @@ FROM ${RUST_IMAGE} AS rust
 WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
-RUN cargo build --release --locked -p pqc-probe-cli -p pqc-probe-web \
+RUN cargo build --release --locked -p pqc-probe -p pqc-probe-web \
  && install -D -m 0755 target/release/pqc-probe /out/pqc-probe \
  && install -D -m 0755 target/release/pqc-probe-web /out/pqc-probe-web
 
