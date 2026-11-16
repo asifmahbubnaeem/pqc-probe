@@ -8,11 +8,9 @@ authors.workspace = true
 description = "Core probe logic: detects PQ algorithms on TLS and SSH endpoints"
 
 [dependencies]
-anyhow.workspace = true
 thiserror.workspace = true
 serde.workspace = true
 tokio.workspace = true
-tracing.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
 dns-lookup.workspace = true
