@@ -1,0 +1,7 @@
+{"schema_version":1,"target":{"input":"classical.test","host":"classical.test","tls_port":443,"ssh_port":22},
+ "tls":{"vanilla":{"kems_tried":[
+   {"offered":"X25519","negotiated":"X25519","handshake_succeeded":true},
+   {"offered":"X25519MLKEM768","negotiated":null,"handshake_succeeded":false}]},
+   "experimental":null,"diff":null,"vanilla_pq_capable":false,"errors":{"vanilla":null,"experimental":null}},
+ "ssh":{"vanilla":{"server_offered_kex":["curve25519-sha256"],"client_verified":[]},"experimental":null,
+   "diff":null,"errors":{"vanilla":null,"experimental":null}}}

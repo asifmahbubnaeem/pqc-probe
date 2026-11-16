@@ -1,0 +1,74 @@
+name: pqc-probe
+description: Report which post-quantum key exchanges servers support over TLS and SSH, and optionally fail the job on a policy.
+author: Asif Mahbub Naeem
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  targets:
+    description: Hosts to probe, as `host` or `host:port`, separated by spaces, commas or new lines. Lines starting with `#` are ignored.
+    required: true
+  protocol:
+    description: "`tls`, `ssh` or `both`."
+    default: both
+  mode:
+    description: "`vanilla` (stock clients), `experimental` (OQS clients) or `both` (compared)."
+    default: both
+  tls-port:
+    description: TLS port for every target (default 443, or the port written in the target).
+    default: ""
+  ssh-port:
+    description: SSH port for every target (default 22).
+    default: ""
+  timeout:
+    description: Seconds per connection attempt.
+    default: "15"
+  require-pq-tls:
+    description: Fail if a target completes no TLS handshake with a post-quantum group.
+    default: "false"
+  require-pq-ssh:
+    description: Fail if a target completes no SSH key exchange with a post-quantum algorithm.
+    default: "false"
+  fail-on-error:
+    description: Fail if a target could not be probed at all.
+    default: "true"
+  output-dir:
+    description: Directory for the JSON reports (one per target, same schema as `pqc-probe --output json`).
+    default: pqc-probe-reports
+  image:
+    description: Image to run. Default is the pqc-probe image matching this action's version tag, or `edge` for other refs.
+    default: ""
+
+outputs:
+  report-dir:
+    description: Directory holding the JSON reports.
+    value: ${{ steps.probe.outputs.report-dir }}
+  violations:
+    description: Number of targets that broke a requested policy.
+    value: ${{ steps.probe.outputs.violations }}
+  errors:
+    description: Number of targets that could not be probed.
+    value: ${{ steps.probe.outputs.errors }}
+
+runs:
+  using: composite
+  steps:
+    - id: probe
+      shell: bash
+      # Inputs go in through the environment, never into the script text, so a target list
+      # cannot inject shell code.
+      env:
+        INPUT_TARGETS: ${{ inputs.targets }}
+        INPUT_PROTOCOL: ${{ inputs.protocol }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_TLS_PORT: ${{ inputs.tls-port }}
+        INPUT_SSH_PORT: ${{ inputs.ssh-port }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_REQUIRE_PQ_TLS: ${{ inputs.require-pq-tls }}
+        INPUT_REQUIRE_PQ_SSH: ${{ inputs.require-pq-ssh }}
+        INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_IMAGE: ${{ inputs.image }}
+        ACTION_REF: ${{ github.action_ref }}
+      run: '"$GITHUB_ACTION_PATH/action/run.sh"'

@@ -1,0 +1,5 @@
+{"schema_version":1,"target":{"input":"tlsonly.test","host":"tlsonly.test","tls_port":443,"ssh_port":null},
+ "tls":{"vanilla":null,"experimental":{"kems_tried":[
+   {"offered":"X25519MLKEM768","negotiated":"X25519MLKEM768","handshake_succeeded":true}]},
+   "diff":null,"vanilla_pq_capable":null,"errors":{"vanilla":"handshake failed","experimental":null}},
+ "ssh":null}

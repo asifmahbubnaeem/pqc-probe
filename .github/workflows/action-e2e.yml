@@ -1,0 +1,56 @@
+# Builds the image and runs the action against a real host. github.com is used because its
+# SSH service negotiates post-quantum key exchange; if GitHub changes that, this check changes.
+name: action-e2e
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - action.yml
+      - "action/**"
+      - Dockerfile
+      - "docker/**"
+      - "crates/**"
+      - Cargo.lock
+      - .github/workflows/action-e2e.yml
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the image locally
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: pqc-probe:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - id: probe
+        uses: ./
+        with:
+          targets: github.com
+          protocol: both
+          mode: both
+          require-pq-ssh: "true"
+          image: pqc-probe:ci
+      - name: Check the report
+        env:
+          DIR: ${{ steps.probe.outputs.report-dir }}
+          VIOLATIONS: ${{ steps.probe.outputs.violations }}
+          ERRORS: ${{ steps.probe.outputs.errors }}
+        run: |
+          test "$VIOLATIONS" = 0 && test "$ERRORS" = 0
+          jq -e '.schema_version == 1 and .tls != null and .ssh != null' "$DIR/github.com.json"
+          jq -e '[.ssh.vanilla, .ssh.experimental | select(. != null) | .client_verified[]] | length > 0' "$DIR/github.com.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pqc-probe-reports
+          path: ${{ steps.probe.outputs.report-dir }}

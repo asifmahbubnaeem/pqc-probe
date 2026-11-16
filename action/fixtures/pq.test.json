@@ -1,0 +1,8 @@
+{"schema_version":1,"target":{"input":"pq.test","host":"pq.test","tls_port":443,"ssh_port":22},
+ "tls":{"vanilla":{"kems_tried":[
+   {"offered":"X25519","negotiated":"X25519","handshake_succeeded":true},
+   {"offered":"X25519MLKEM768","negotiated":"X25519MLKEM768","handshake_succeeded":true}]},
+   "experimental":null,"diff":null,"vanilla_pq_capable":true,"errors":{"vanilla":null,"experimental":"oqs build missing"}},
+ "ssh":{"vanilla":{"server_offered_kex":["mlkem768x25519-sha256","curve25519-sha256"],"client_verified":["mlkem768x25519-sha256"]},
+   "experimental":{"server_offered_kex":["mlkem768x25519-sha256","sntrup761x25519-sha512"],"client_verified":["mlkem768x25519-sha256","sntrup761x25519-sha512"]},
+   "diff":null,"errors":{"vanilla":null,"experimental":null}}}
