@@ -6,7 +6,7 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
-## [0.1.0] - unreleased
+## [0.1.0] - 2026-11-18
 
 First release.
 
