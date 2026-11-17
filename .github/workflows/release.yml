@@ -35,9 +35,16 @@ jobs:
           mkdir "$d"
           cp target/x86_64-unknown-linux-musl/release/pqc-probe target/x86_64-unknown-linux-musl/release/pqc-probe-web "$d/"
           cp README.md CHANGELOG.md LICENSE-MIT LICENSE-APACHE "$d/"
+          strip "$d/pqc-probe" "$d/pqc-probe-web"
           file "$d/pqc-probe" "$d/pqc-probe-web"
-          file "$d/pqc-probe" | grep -q "statically linked"
+          # Static (plain or static-pie): no dynamic loader and no shared-library dependencies.
+          for b in "$d/pqc-probe" "$d/pqc-probe-web"; do
+            if readelf -l "$b" | grep -q "program interpreter" || readelf -d "$b" | grep -q "(NEEDED)"; then
+              echo "::error::$b is not statically linked"; exit 1
+            fi
+          done
           "$d/pqc-probe" --help > /dev/null
+          ls -l "$d"
           tar -czf "$d.tar.gz" "$d"
           sha256sum "$d.tar.gz" > "$d.tar.gz.sha256"
           cat "$d.tar.gz.sha256"
