@@ -1,0 +1,76 @@
+# Builds static Linux binaries and, for a version tag, publishes a GitHub Release with them.
+#   tag v1.2.3      -> build, check, create the release "v1.2.3" with notes from CHANGELOG.md
+#   manual run      -> build and check only; the archive is kept as a workflow artifact
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: The tag must match the version in Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          want="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)"
+          test "${GITHUB_REF_NAME#v}" = "$want" || { echo "::error::tag $GITHUB_REF_NAME but Cargo.toml says $want"; exit 1; }
+      - name: Toolchain (static musl target)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools
+          rustup toolchain install stable --profile minimal --target x86_64-unknown-linux-musl
+          rustup default stable
+      - name: Build
+        run: cargo build --release --locked --target x86_64-unknown-linux-musl -p pqc-probe -p pqc-probe-web
+      - name: Package and check
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then v="$GITHUB_REF_NAME"; else v="dev-${GITHUB_SHA::7}"; fi
+          d="pqc-probe-$v-x86_64-linux"
+          mkdir "$d"
+          cp target/x86_64-unknown-linux-musl/release/pqc-probe target/x86_64-unknown-linux-musl/release/pqc-probe-web "$d/"
+          cp README.md CHANGELOG.md LICENSE-MIT LICENSE-APACHE "$d/"
+          file "$d/pqc-probe" "$d/pqc-probe-web"
+          file "$d/pqc-probe" | grep -q "statically linked"
+          "$d/pqc-probe" --help > /dev/null
+          tar -czf "$d.tar.gz" "$d"
+          sha256sum "$d.tar.gz" > "$d.tar.gz.sha256"
+          cat "$d.tar.gz.sha256"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: pqc-probe-*.tar.gz*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      - name: Release notes from CHANGELOG.md
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "::error::no CHANGELOG.md section for $v"; exit 1; }
+          if grep -q "^## \[$v\] - unreleased" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md still says $v is unreleased; set the date before tagging"; exit 1
+          fi
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "pqc-probe $GITHUB_REF_NAME" --notes-file notes.md --verify-tag
