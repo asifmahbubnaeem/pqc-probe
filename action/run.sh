@@ -34,7 +34,9 @@ case "$MODE" in vanilla|experimental|both) ;; *) die "mode must be vanilla, expe
 for b in REQUIRE_PQ_TLS REQUIRE_PQ_SSH FAIL_ON_ERROR; do
   is_bool "${!b}" || die "$(echo "$b" | tr 'A-Z_' 'a-z-') must be true or false (got '${!b}')"
 done
-[[ "$TIMEOUT" =~ ^[0-9]+$ ]] && [ "$TIMEOUT" -ge 1 ] && [ "$TIMEOUT" -le 120 ] || die "timeout must be 1-120 seconds"
+if ! { [[ "$TIMEOUT" =~ ^[0-9]+$ ]] && [ "$TIMEOUT" -ge 1 ] && [ "$TIMEOUT" -le 120 ]; }; then
+  die "timeout must be 1-120 seconds"
+fi
 [ -z "$TLS_PORT" ] || is_port "$TLS_PORT" || die "tls-port must be 1-65535"
 [ -z "$SSH_PORT" ] || is_port "$SSH_PORT" || die "ssh-port must be 1-65535"
 if [ "$REQUIRE_PQ_TLS" = true ] && [ "$PROTOCOL" = ssh ]; then die "require-pq-tls needs protocol tls or both"; fi
@@ -90,6 +92,7 @@ ssh_pq() {
 }
 
 cell() {
+  # shellcheck disable=SC2016  # the backticks are literal: Markdown code spans
   case "$1" in
     yes:*) echo "yes (\`${1#yes:}\`)" | sed 's/,/`, `/g' ;;
     no) echo "no" ;;

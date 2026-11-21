@@ -6,6 +6,12 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+### Project
+
+- CI runs ShellCheck on every shell script (`action/run.sh`, `action/test.sh`, `scripts/check.sh`,
+  `docker/openssl-oqs`); the findings it raised are fixed. The action's timeout check is now a
+  plain `if`, and its tests cover the upper bound (121 is refused).
+
 ## [0.1.0] - 2026-11-18
 
 First release.

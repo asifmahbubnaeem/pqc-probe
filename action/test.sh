@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Tests for action/run.sh. A fake `docker` serves the reports in action/fixtures, so nothing is
 # pulled or probed. Needs bash and jq. Run: action/test.sh
+# shellcheck disable=SC2016  # expected summary rows contain literal Markdown backticks
 set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 work="$(mktemp -d)"
@@ -100,7 +101,7 @@ check "not kept as a report" [ ! -e "$dir/pqc-probe-reports/garbage.test.json" ]
 # --- target lists
 run_case list_parsing INPUT_TARGETS=$'pq.test, classical.test\n# a comment\n   tlsonly.test  # trailing'
 check "exit 0" [ "$code" = 0 ]
-check "three reports" [ "$(ls "$dir/pqc-probe-reports" | grep -c json)" = 3 ]
+check "three reports" [ "$(find "$dir/pqc-probe-reports" -maxdepth 1 -name '*.json' | wc -l)" -eq 3 ]
 
 run_case port_in_target INPUT_TARGETS="pq.test:8443"
 check "file name keeps the port" [ -f "$dir/pqc-probe-reports/pq.test_8443.json" ]
@@ -113,7 +114,7 @@ check "a star is rejected, not expanded" [ "$code" = 2 ]
 
 # --- bad input is refused before anything runs
 for bad in \
-  "INPUT_PROTOCOL=ftp" "INPUT_MODE=fast" "INPUT_TIMEOUT=0" "INPUT_TIMEOUT=abc" \
+  "INPUT_PROTOCOL=ftp" "INPUT_MODE=fast" "INPUT_TIMEOUT=0" "INPUT_TIMEOUT=121" "INPUT_TIMEOUT=abc" \
   "INPUT_TLS_PORT=70000" "INPUT_SSH_PORT=0" "INPUT_REQUIRE_PQ_TLS=yes" "INPUT_FAIL_ON_ERROR=1" \
   "INPUT_PROTOCOL=ssh INPUT_REQUIRE_PQ_TLS=true" "INPUT_PROTOCOL=tls INPUT_REQUIRE_PQ_SSH=true"; do
   # shellcheck disable=SC2086

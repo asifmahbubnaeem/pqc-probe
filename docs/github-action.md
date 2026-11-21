@@ -86,4 +86,5 @@ every push against third-party servers.
   `latest`) and when run by hand on `main` (`edge`). After the first publish, set the package's
   visibility to public in its GitHub settings, or workflows in other repositories cannot pull it.
 - `action/test.sh` tests the action's logic with a fake `docker` and canned reports; CI runs it.
+- CI also runs ShellCheck on the action's scripts.
 - `.github/workflows/action-e2e.yml` builds the image and runs the action against github.com.

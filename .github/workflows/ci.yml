@@ -37,6 +37,16 @@ jobs:
         run: rustup toolchain install stable --profile minimal && rustup default stable
       - run: cargo package --workspace --locked
 
+  shellcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: ShellCheck (every shell script in the repo)
+        run: |
+          command -v shellcheck >/dev/null || { sudo apt-get update -q && sudo apt-get install -y -q shellcheck; }
+          shellcheck --version
+          shellcheck action/run.sh action/test.sh scripts/check.sh docker/openssl-oqs
+
   action:
     runs-on: ubuntu-24.04
     steps:

@@ -7,7 +7,7 @@
 #
 # Exits non-zero if any step failed. The last line of the log is "## RESULT: PASS|FAIL".
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 mkdir -p scratch
 LOG=scratch/last-check.log
 
