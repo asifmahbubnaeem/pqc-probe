@@ -74,7 +74,10 @@ Every client is limited by address (IPv6 clients by /64):
 | `PQC_WEB_PROBE_TIMEOUT_SECS` | 15 | timeout of each connection a probe makes |
 
 Over a limit the service answers `429` with code `rate_limited` and a `Retry-After` header.
-Requests answered from the cooldown do not count against the client. `X-Forwarded-For` is
+Requests answered from the cooldown do not count against the client. Neither does an identical
+request that arrives while the first is still being prepared (a double-click): it waits for that
+job, up to 15 s, and is charged like a status poll. If the first is refused, the waiting one is
+processed on its own. `X-Forwarded-For` is
 read from the right and only when the direct peer is a trusted proxy; behind a reverse proxy
 set `PQC_WEB_TRUSTED_PROXIES` to its address, otherwise every client looks like the proxy.
 

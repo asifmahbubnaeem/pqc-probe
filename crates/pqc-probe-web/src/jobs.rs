@@ -13,7 +13,7 @@ use pqc_probe_core::Report;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::Semaphore;
+use tokio::sync::{watch, Semaphore};
 
 /// Anything that must live exactly as long as the job (for example a client's in-flight slot).
 pub type Hold = Box<dyn Send + 'static>;
@@ -24,6 +24,45 @@ pub enum Submitted {
     New(String),
     /// A job for the same key started within the cooldown; nothing new was queued.
     Reused(String),
+}
+
+/// How long an identical request waits for the first one to become a job. The first one's work
+/// before that point is DNS (5 s, retried once) and the limit checks.
+pub const FOLLOW_WAIT: Duration = Duration::from_secs(15);
+
+/// Outcome of [`JobStore::begin`] for a request key.
+pub enum Flight {
+    /// A job for this key started within the cooldown.
+    Reused(String),
+    /// Nobody else is preparing this key: this request does the work and reports the job id.
+    Leader(Leader),
+    /// An identical request is being prepared right now: wait for its job with [`JobStore::follow`].
+    Follower(watch::Receiver<Option<String>>),
+}
+
+/// Marks a key as being prepared. Dropping it (on success or on any early return) lets the next
+/// identical request through; requests waiting on it get the job id if [`Leader::started`] was
+/// called, and otherwise go on to do the work themselves.
+pub struct Leader {
+    store: Arc<JobStore>,
+    key: String,
+    tx: watch::Sender<Option<String>>,
+}
+
+impl Leader {
+    pub fn started(&self, id: &str) {
+        self.tx.send_replace(Some(id.to_string()));
+    }
+}
+
+impl Drop for Leader {
+    fn drop(&mut self) {
+        self.store
+            .pending
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(&self.key);
+    }
 }
 
 #[derive(Debug)]
@@ -65,6 +104,9 @@ pub struct JobStore {
     /// Most recent job per request key, for the per-target cooldown.
     recent: Mutex<HashMap<String, (String, Instant)>>,
     cooldown: Duration,
+    /// Keys whose first request is still being prepared (DNS, limits), so an identical request
+    /// arriving meanwhile waits for that job instead of repeating the work.
+    pending: Mutex<HashMap<String, watch::Receiver<Option<String>>>>,
 }
 
 fn now_rfc3339() -> String {
@@ -90,6 +132,7 @@ impl JobStore {
             result_ttl: config.result_ttl,
             recent: Mutex::new(HashMap::new()),
             cooldown: config.limits.target_cooldown,
+            pending: Mutex::new(HashMap::new()),
         })
     }
 
@@ -125,7 +168,36 @@ impl JobStore {
         self.fresh(&recent, key)
     }
 
-    // Lock order is always `recent` then `jobs`, never the other way round.
+    /// Decide how a request with this `key` is served: by a recent job, by waiting for an
+    /// identical request that is being prepared, or by doing the work.
+    pub fn begin(self: &Arc<Self>, key: &str) -> Flight {
+        let mut pending = self.pending.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(id) = self.recent(key) {
+            return Flight::Reused(id);
+        }
+        if let Some(rx) = pending.get(key) {
+            return Flight::Follower(rx.clone());
+        }
+        let (tx, rx) = watch::channel(None);
+        pending.insert(key.to_string(), rx);
+        Flight::Leader(Leader {
+            store: Arc::clone(self),
+            key: key.to_string(),
+            tx,
+        })
+    }
+
+    /// Wait for the leader's job id. `None` if the leader gave up (refused target, limits, full
+    /// queue) or took longer than [`FOLLOW_WAIT`].
+    pub async fn follow(mut rx: watch::Receiver<Option<String>>) -> Option<String> {
+        let seen = tokio::time::timeout(FOLLOW_WAIT, rx.wait_for(Option::is_some))
+            .await
+            .ok()?
+            .ok()?;
+        seen.clone()
+    }
+
+    // Lock order is always `pending`, then `recent`, then `jobs`, never the other way round.
     fn fresh(&self, recent: &HashMap<String, (String, Instant)>, key: &str) -> Option<String> {
         let (id, at) = recent.get(key)?;
         (at.elapsed() < self.cooldown && self.lock().contains_key(id)).then(|| id.clone())

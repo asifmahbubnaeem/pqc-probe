@@ -6,6 +6,13 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+### Web service
+
+- An identical request that arrives while the first is still being prepared (a double-click on
+  the form, a retried API call) now waits for the first one's job instead of resolving again and
+  spending the client's and the target's budget. Before, a triple-click cost two tokens and two
+  DNS lookups, and the third click got `429`.
+
 ### Docker image
 
 - OQS-OpenSSH pin moved from `6717c038a` to `4c308effc` (the `OQS-v10` head on 2026-11-21). It

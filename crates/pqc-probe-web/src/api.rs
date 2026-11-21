@@ -2,7 +2,7 @@
 
 use crate::config::Config;
 use crate::error::ApiError;
-use crate::jobs::{JobStore, ReportLookup, SubmitError, Submitted};
+use crate::jobs::{Flight, JobStore, ReportLookup, SubmitError, Submitted};
 use crate::model::{is_valid_job_id, Created, JobStatus, ProbeRequest};
 use crate::pages;
 use crate::prober::{ProbeJob, Prober, Resolver};
@@ -254,11 +254,22 @@ pub(crate) async fn submit(
     });
 
     // A repeat of a recent request gets the earlier job back: no new probe, no DNS lookup, and
-    // nothing counted against the client.
+    // nothing counted against the client. So does a repeat that arrives while the first one is
+    // still being prepared (a double-click): it waits for that job instead of doing the work
+    // again. Waiting is charged like a status poll.
     let key = dedupe_key(&host, req.protocol, mode, tls_port, ssh_port);
-    if let Some(id) = st.store.recent(&key) {
-        return Ok((id, true));
-    }
+    let leader = match st.store.begin(&key) {
+        Flight::Reused(id) => return Ok((id, true)),
+        Flight::Follower(rx) => {
+            check_poll(st, ip)?;
+            if let Some(id) = JobStore::follow(rx).await {
+                return Ok((id, true));
+            }
+            // The first request was refused; this one gets its own answer.
+            None
+        }
+        Flight::Leader(leader) => Some(leader),
+    };
     // From here on the request costs work (DNS at least), so it counts. The guard holds the
     // client's in-flight slot; it is released on any early return and when the job ends.
     let guard = st
@@ -313,10 +324,14 @@ pub(crate) async fn submit(
         .store
         .submit_keyed(key, job, Arc::clone(&st.prober), Box::new(guard))
         .map_err(|SubmitError::Busy| ApiError::busy(BUSY_RETRY_SECS))?;
-    Ok(match submitted {
+    let (id, reused) = match submitted {
         Submitted::New(id) => (id, false),
         Submitted::Reused(id) => (id, true),
-    })
+    };
+    if let Some(leader) = &leader {
+        leader.started(&id);
+    }
+    Ok((id, reused))
 }
 
 async fn get_probe(
@@ -838,6 +853,97 @@ mod tests {
         )
         .await;
         assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+    }
+
+    /// A resolver that takes a while and counts how often it is asked.
+    struct SlowResolver(std::sync::atomic::AtomicUsize, Duration);
+
+    impl Resolver for SlowResolver {
+        fn prepare<'a>(
+            &'a self,
+            host: &'a str,
+            port: u16,
+            policy: &'a Policy,
+        ) -> crate::prober::BoxFuture<'a, Result<pqc_probe_core::Target, pqc_probe_core::PolicyError>>
+        {
+            self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Box::pin(async move {
+                tokio::time::sleep(self.1).await;
+                FakeResolver.prepare(host, port, policy).await
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn a_triple_click_while_dns_is_slow_makes_one_job_and_costs_one_request() {
+        // Three identical submissions arrive together while the first is still resolving.
+        // Before: the second spent a token and a lookup, and the third got 429 (2 in flight).
+        let resolver = Arc::new(SlowResolver(Default::default(), Duration::from_millis(200)));
+        let app = router(state_with(
+            limited(5, 2, 60, &[]),
+            FakeProber::ok(),
+            resolver.clone(),
+        ));
+        let (a, b, c) = tokio::join!(
+            send(&app, post_from(BODY, "198.51.100.1", None)),
+            send(&app, post_from(BODY, "198.51.100.1", None)),
+            send(&app, post_from(BODY, "198.51.100.1", None)),
+        );
+        let out = [a, b, c];
+        for (s, _, _) in &out {
+            assert_eq!(*s, StatusCode::ACCEPTED);
+        }
+        let ids: std::collections::HashSet<_> = out
+            .iter()
+            .map(|(_, _, v)| v["id"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(ids.len(), 1, "one job for all three");
+        let new = out.iter().filter(|(_, _, v)| v["reused"] == false).count();
+        assert_eq!(new, 1);
+        assert_eq!(
+            resolver.0.load(std::sync::atomic::Ordering::SeqCst),
+            1,
+            "one DNS lookup"
+        );
+        // Only one of the five burst tokens was spent: four more new targets fit, the fifth does
+        // not. (Each fake probe ends at once; the pause frees its in-flight slot.)
+        let mut statuses = Vec::new();
+        for t in ["a.test", "b.test", "c.test", "d.test", "e.test"] {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            let body = format!(r#"{{"target":"{t}"}}"#);
+            statuses.push(send(&app, post_from(&body, "198.51.100.1", None)).await.0);
+        }
+        assert_eq!(
+            statuses,
+            [
+                StatusCode::ACCEPTED,
+                StatusCode::ACCEPTED,
+                StatusCode::ACCEPTED,
+                StatusCode::ACCEPTED,
+                StatusCode::TOO_MANY_REQUESTS
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn a_repeat_of_a_refused_request_gets_its_own_refusal() {
+        // The first request fails at DNS; the one waiting on it must not hang or reuse
+        // anything, and gets the same kind of answer by doing the work itself.
+        let resolver = Arc::new(SlowResolver(Default::default(), Duration::from_millis(200)));
+        let app = router(state_with(
+            limited(5, 2, 60, &[]),
+            FakeProber::ok(),
+            resolver.clone(),
+        ));
+        let body = r#"{"target":"internal.test"}"#;
+        let (a, b) = tokio::join!(
+            send(&app, post_from(body, "198.51.100.1", None)),
+            send(&app, post_from(body, "198.51.100.1", None)),
+        );
+        assert_eq!(a.0, StatusCode::FORBIDDEN);
+        assert_eq!(b.0, StatusCode::FORBIDDEN);
+        assert_eq!(a.2["error"]["code"], b.2["error"]["code"]);
+        assert_eq!(resolver.0.load(std::sync::atomic::Ordering::SeqCst), 2);
     }
 
     #[tokio::test]
