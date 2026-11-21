@@ -63,7 +63,7 @@ RUN git clone --depth 1 --branch "${OQS_PROVIDER_VERSION}" https://github.com/op
 # ---------------------------------------------------------------------------------------------
 FROM debian:${DEBIAN}-slim AS oqs-ssh
 ARG OQS_OPENSSH_BRANCH=OQS-v10
-ARG OQS_OPENSSH_COMMIT=6717c038af98ac482c94cc487bc2b6524e2f8ccc
+ARG OQS_OPENSSH_COMMIT=4c308effc8c92dc4bcbfde10327109457626c043
 ARG OQS_OPENSSH_LIBOQS=main
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates git build-essential autoconf automake libtool \
@@ -78,7 +78,7 @@ RUN LIBOQS_BRANCH="${OQS_OPENSSH_LIBOQS}" ./oqs-scripts/clone_liboqs.sh \
  && git -C oqs-scripts/tmp/liboqs rev-parse HEAD > /oqs-openssh-liboqs.commit \
  && ./oqs-scripts/build_liboqs.sh \
  && test -d oqs/lib -o -d oqs/lib64
-# Upstream bug (present since July 2026): ssh-oqs.c includes oqs-utils.h, which includes
+# Upstream bug open-quantum-safe/openssh#210 (present since July 2026): ssh-oqs.c includes oqs-utils.h, which includes
 # sshkey.h, before defining SSHKEY_INTERNAL, so sshkey.h's internal declarations are hidden
 # behind its include guard. GCC 13 only warns about the resulting implicit declaration of
 # sshkey_clear_pkey; GCC 14 (Debian 13) refuses. Define it before the first include, as the
@@ -88,7 +88,7 @@ RUN if grep -q '^#define SSHKEY_INTERNAL' ssh-oqs.c \
       sed -i '0,/^#include "includes.h"/s//#define SSHKEY_INTERNAL\n#include "includes.h"/' ssh-oqs.c \
       && echo "patched ssh-oqs.c (SSHKEY_INTERNAL before includes)"; \
     fi
-# Same commit, same kind of bug: kex.c defines kex_reset_keys and kexgen.c calls it, but kex.h
+# open-quantum-safe/openssh#211, same kind of bug: kex.c defines kex_reset_keys and kexgen.c calls it, but kex.h
 # has no prototype. Added only if kex.h still lacks one.
 RUN if ! grep -q 'kex_reset_keys' kex.h; then \
       sed -i '/^int[[:space:]]*kex_derive_keys(/a void\tkex_reset_keys(struct kex *);' kex.h \

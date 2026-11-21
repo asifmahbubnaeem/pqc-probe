@@ -29,7 +29,7 @@ Build arguments (defaults in brackets):
 | `LIBOQS_VERSION` [0.15.0] | liboqs release for oqs-provider |
 | `OQS_PROVIDER_VERSION` [0.11.0] | oqs-provider release (upstream pairs 0.11.0 with liboqs 0.15.0) |
 | `OQS_OPENSSH_BRANCH` [OQS-v10] | OQS-OpenSSH branch (OpenSSH 10.4 based) |
-| `OQS_OPENSSH_COMMIT` [6717c038a...] | exact OQS-OpenSSH commit; empty means the branch head |
+| `OQS_OPENSSH_COMMIT` [4c308effc...] | exact OQS-OpenSSH commit; empty means the branch head |
 | `OQS_OPENSSH_LIBOQS` [main] | liboqs branch or tag OQS-OpenSSH's script builds against |
 | `RUST_IMAGE` [rust:1-slim-trixie] | Rust toolchain image for the build stage |
 
@@ -37,8 +37,10 @@ OQS-OpenSSH has no release tags, so the Dockerfile pins a commit. Its own script
 from `main` unless `OQS_OPENSSH_LIBOQS` names a tag; the commit used is recorded in `VERSIONS`.
 
 The Dockerfile applies two one-line fixes to OQS-OpenSSH: a missing declaration in `ssh-oqs.c`
-(include order) and a missing prototype in `kex.h`. GCC 13 only warns about them; Debian 13's
-GCC 14 refuses to compile. Each fix is applied only while the upstream file still needs it.
+(include order, [#210](https://github.com/open-quantum-safe/openssh/issues/210)) and a missing
+prototype in `kex.h` ([#211](https://github.com/open-quantum-safe/openssh/issues/211)). GCC 13
+only warns about them; Debian 13's GCC 14 refuses to compile. Each fix is applied only while the
+upstream file still needs it.
 OQS-OpenSSH's liboqs is shipped in `/opt/oqs-openssh/lib` and found through a run path, so it
 never mixes with the TLS stack's liboqs in `/opt/liboqs/lib`.
 

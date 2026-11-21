@@ -6,6 +6,12 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+### Docker image
+
+- OQS-OpenSSH pin moved from `6717c038a` to `4c308effc` (the `OQS-v10` head on 2026-11-21). It
+  brings upstream #204, which teaches `sshkey_check_sigtype` about OQS hybrid signature
+  framing. The two local GCC 14 fixes are still needed and still applied (upstream #210, #211).
+
 ### Project
 
 - CI runs ShellCheck on every shell script (`action/run.sh`, `action/test.sh`, `scripts/check.sh`,
