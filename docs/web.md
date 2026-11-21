@@ -36,8 +36,10 @@ SSH port. `tls_port` / `ssh_port` override.
 
 Errors are `{"error":{"code":"...","message":"...","hint":null}}`. Stable codes:
 `invalid_request` (400), `unsupported_media_type` (415), `payload_too_large` (413),
-`invalid_target` (400), `port_not_allowed` (400), `unresolvable_target` (400),
-`target_not_allowed` (403), `busy` (503, with `Retry-After`), `not_found` (404),
+`invalid_target` (400), `port_not_allowed` (400), `unknown_host` (400),
+`unresolvable_target` (400), `target_not_allowed` (403), `mode_unavailable` (422),
+`rate_limited` (429, with `Retry-After`), `target_busy` (429, with `Retry-After`),
+`busy` (503, with `Retry-After`), `resolver_busy` (503, with `Retry-After`), `not_found` (404),
 `not_ready` (409, with `Retry-After`), `job_failed` (409), `job_timed_out` (409).
 
 ## What protects the targets and the service

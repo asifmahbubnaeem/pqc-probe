@@ -6,6 +6,23 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+### Breaking (`pqc-probe-core`)
+
+- `PolicyError` is now `#[non_exhaustive]` and has a new variant, `ResolverBusy`. Code that
+  matches on it needs a wildcard arm. The next release bumps `pqc-probe-core` to 0.2.0.
+
+### Core
+
+- At most 32 DNS lookups (`policy::MAX_LOOKUPS`) hold a resolver thread at once. A lookup past
+  its 5 s limit keeps its slot until its thread really ends, so a slow or hostile DNS server can
+  no longer pin an unbounded number of threads. When all slots are taken, lookups fail at once
+  with `PolicyError::ResolverBusy`, which is not retried.
+
+### Web service
+
+- A full resolver is answered with `503 resolver_busy` and `Retry-After: 5`. The documented list
+  of error codes now includes every code the service returns.
+
 ### Web service
 
 - An identical request that arrives while the first is still being prepared (a double-click on

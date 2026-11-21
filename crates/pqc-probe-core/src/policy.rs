@@ -16,9 +16,11 @@ use dns_lookup::{getaddrinfo, AddrInfoHints, LookupErrorKind};
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::Duration;
 use thiserror::Error;
+use tokio::sync::Semaphore;
 
 /// Why a target was refused.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
+#[non_exhaustive]
 pub enum PolicyError {
     #[error("invalid host '{0}': {1}")]
     InvalidHost(String, &'static str),
@@ -30,6 +32,9 @@ pub enum PolicyError {
     UnknownHost(String),
     #[error("DNS lookup for '{0}' failed: {1}")]
     ResolveFailed(String, String),
+    /// Every lookup slot is taken (see [`MAX_LOOKUPS`]); nothing was asked of DNS.
+    #[error("too many DNS lookups in progress")]
+    ResolverBusy,
     #[error("'{host}' resolves to {ip}, which is not allowed ({reason})")]
     BlockedAddress {
         host: String,
@@ -195,6 +200,17 @@ pub fn check_resolved(
 /// `AF_INET`: 2 on Linux, macOS, the BSDs and Windows.
 const AF_INET: i32 = 2;
 
+/// How many lookups may hold a resolver thread at once. A lookup that passes its 5 s limit keeps
+/// its thread (and its slot) until the system resolver gives up, so this also bounds the threads
+/// a slow or hostile DNS server can pin. When all are taken, a lookup fails at once with
+/// [`PolicyError::ResolverBusy`].
+pub const MAX_LOOKUPS: usize = 32;
+
+static LOOKUP_SLOTS: Semaphore = Semaphore::const_new(MAX_LOOKUPS);
+
+/// Time allowed for one lookup attempt.
+const LOOKUP_LIMIT: Duration = Duration::from_secs(5);
+
 /// Resolve `host` to its IPv4 addresses.
 ///
 /// Asks the system resolver (`getaddrinfo`) for IPv4 only. Tokio's own lookup asks for every
@@ -216,10 +232,40 @@ struct LookupFailure {
 
 async fn lookup_once(host: &str) -> Result<Vec<Ipv4Addr>, LookupFailure> {
     let name = host.to_string();
-    let task = tokio::task::spawn_blocking(move || lookup_blocking(&name));
-    match tokio::time::timeout(Duration::from_secs(5), task).await {
+    lookup_in_slot(&LOOKUP_SLOTS, LOOKUP_LIMIT, host, move || {
+        lookup_blocking(&name)
+    })
+    .await
+}
+
+/// Run one blocking lookup on its own thread, holding a slot from `slots` until the thread
+/// finishes (not merely until `limit` passes), so stuck lookups are counted.
+async fn lookup_in_slot<F>(
+    slots: &'static Semaphore,
+    limit: Duration,
+    host: &str,
+    lookup: F,
+) -> Result<Vec<Ipv4Addr>, LookupFailure>
+where
+    F: FnOnce() -> Result<Vec<Ipv4Addr>, LookupFailure> + Send + 'static,
+{
+    let Ok(slot) = slots.try_acquire() else {
+        return Err(LookupFailure {
+            error: PolicyError::ResolverBusy,
+            retry: false,
+        });
+    };
+    let task = tokio::task::spawn_blocking(move || {
+        let result = lookup();
+        drop(slot);
+        result
+    });
+    match tokio::time::timeout(limit, task).await {
         Err(_) => Err(LookupFailure {
-            error: PolicyError::ResolveFailed(host.to_string(), "timed out after 5s".into()),
+            error: PolicyError::ResolveFailed(
+                host.to_string(),
+                format!("timed out after {}s", limit.as_secs_f32()),
+            ),
             retry: true,
         }),
         Ok(Err(join_error)) => Err(LookupFailure {
@@ -370,6 +416,57 @@ mod policy_tests {
         .await;
         assert!(r.unwrap().is_empty());
         assert_eq!(calls.get(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_stuck_lookup_keeps_its_slot_until_its_thread_ends() {
+        // One slot. The first lookup hangs past its limit; while its thread is still stuck, the
+        // next lookup is refused at once instead of starting another thread.
+        let slots: &'static Semaphore = Box::leak(Box::new(Semaphore::new(1)));
+        let limit = Duration::from_millis(100);
+        let stuck = lookup_in_slot(slots, limit, "slow.test", || {
+            std::thread::sleep(Duration::from_millis(600));
+            Ok(vec![ip("93.184.216.34")])
+        })
+        .await;
+        assert!(matches!(
+            stuck,
+            Err(LookupFailure {
+                error: PolicyError::ResolveFailed(..),
+                retry: true
+            })
+        ));
+        let busy =
+            lookup_in_slot(slots, limit, "other.test", || Ok(vec![ip("93.184.216.35")])).await;
+        assert!(matches!(
+            busy,
+            Err(LookupFailure {
+                error: PolicyError::ResolverBusy,
+                retry: false
+            })
+        ));
+        // Once the stuck thread finishes, its slot is free again.
+        tokio::time::sleep(Duration::from_millis(800)).await;
+        let ok = lookup_in_slot(slots, limit, "other.test", || Ok(vec![ip("93.184.216.35")])).await;
+        assert_eq!(ok.unwrap(), vec![ip("93.184.216.35")]);
+        assert_eq!(slots.available_permits(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_busy_resolver_is_not_retried() {
+        let calls = std::sync::atomic::AtomicUsize::new(0);
+        let r = retry_lookup(2, || {
+            calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async {
+                Err(LookupFailure {
+                    error: PolicyError::ResolverBusy,
+                    retry: false,
+                })
+            }
+        })
+        .await;
+        assert_eq!(r, Err(PolicyError::ResolverBusy));
+        assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 1);
     }
 
     #[test]

@@ -56,7 +56,7 @@ how the code is built; "operator" means the deployment has to provide it.
 | Huge request bodies. | Bodies over 8 KB are refused before parsing. | Test: `malformed_requests_get_stable_error_codes`. |
 | Memory growth from stored results. | Results expire after an hour (default) and are swept every minute; the job table is bounded by the queue limit plus retained results. | Test: `finished_jobs_expire_but_running_ones_do_not`. |
 | A panic inside a probe. | Probes run in their own task; a panic marks the job failed and frees its slot. | Test: `a_panicking_prober_fails_the_job_instead_of_hanging_it`. |
-| Slow or failing DNS. | Each lookup is limited to 5 s and retried once only for a timeout. | Test: `a_timeout_is_retried_once` and related. Residual: see below. |
+| Slow or failing DNS. | Each lookup is limited to 5 s and retried once only for a timeout. At most 32 lookups hold a resolver thread at once, counted until the thread really ends (a lookup past its limit keeps its slot); when all are taken, new lookups are refused at once with `503 resolver_busy` and `Retry-After`, and that is not retried. | Test: `a_timeout_is_retried_once`, `a_stuck_lookup_keeps_its_slot_until_its_thread_ends`, `a_busy_resolver_is_not_retried`, `a_busy_resolver_is_503_with_retry_after`. |
 
 ### Hostile servers
 
@@ -116,7 +116,9 @@ The service does not sandbox itself. For a public deployment:
 - **State is in memory.** A restart forgets jobs, limits and cooldowns, which gives a client a
   fresh budget.
 - **A stalled DNS lookup keeps its thread** until the system resolver gives up, even after the
-  5 s limit has passed. Bounded by the per-client limits; not capped separately.
+  5 s limit has passed. At most 32 such threads exist; past that, everyone's new lookups get
+  `503 resolver_busy` until some finish, so a hostile slow DNS server can make the service
+  briefly unavailable, but not exhaust its threads.
 - **Users behind one NAT or one IPv6 /64 share a budget.**
 - **No authentication and no abuse reporting.** Anyone can use the service within the limits;
   there is no way to block a target at a target owner's request except by changing the policy

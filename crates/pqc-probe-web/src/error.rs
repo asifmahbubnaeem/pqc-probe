@@ -130,6 +130,17 @@ impl From<PolicyError> for ApiError {
                 )
                 .with_hint("Check the spelling, or try again in a moment.")
             }
+            PolicyError::ResolverBusy => {
+                tracing::warn!("all DNS lookup slots are taken");
+                let mut e = Self::new(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "resolver_busy",
+                    "too many DNS lookups are in progress",
+                )
+                .with_hint("Retry after the number of seconds in the Retry-After header.");
+                e.retry_after = Some(RESOLVER_BUSY_RETRY_SECS);
+                e
+            }
             // Deliberately does not echo the resolved address: for split-horizon DNS that would
             // tell the caller about internal addressing.
             PolicyError::BlockedAddress { reason, .. } => Self::new(
@@ -138,9 +149,22 @@ impl From<PolicyError> for ApiError {
                 format!("the target resolves to an address that is not allowed ({reason})"),
             )
             .with_hint("This service only probes publicly routable hosts."),
+            // `PolicyError` is non-exhaustive; anything new is an unexplained refusal until it
+            // gets its own code here.
+            other => {
+                tracing::warn!(error = %other, "target refused");
+                Self::new(
+                    StatusCode::BAD_REQUEST,
+                    "target_not_allowed",
+                    "the target cannot be probed",
+                )
+            }
         }
     }
 }
+
+/// How long to tell a client to wait when every lookup slot is taken: about one lookup limit.
+const RESOLVER_BUSY_RETRY_SECS: u64 = 5;
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
@@ -180,5 +204,13 @@ mod tests {
             !failed.message.contains("internal-dns"),
             "resolver detail must not leak"
         );
+    }
+
+    #[test]
+    fn a_busy_resolver_is_503_with_retry_after() {
+        let e: ApiError = PolicyError::ResolverBusy.into();
+        assert_eq!(e.status, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(e.code, "resolver_busy");
+        assert_eq!(e.retry_after, Some(RESOLVER_BUSY_RETRY_SECS));
     }
 }
