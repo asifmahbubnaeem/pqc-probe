@@ -6,6 +6,26 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+### MCP server (new crate `pqc-probe-mcp`)
+
+- An MCP server over stdio with three tools: `probe_tls`, `probe_ssh` and `probe_limits`. It
+  runs the same prober as the web service and, by default, the same target policy (no private
+  or internal addresses, port allowlist, address pinned after one DNS lookup).
+- A probe budget for agent callers: one probe at a time and at most `--probes-per-minute`
+  (default 10). Refused targets do not spend the budget.
+- Each result starts with a short plain-text verdict (YES / NO / UNKNOWN) for models, followed
+  by the schema v1 JSON report. UNKNOWN means no handshake completed, so a closed port is never
+  reported as "no post-quantum support".
+- A request for the experimental client on a server without it runs the stock client and says so
+  in the result, instead of failing (small models often pass `mode` when told not to).
+- A failed or timed-out probe ends with "Verdict: UNKNOWN. Nothing was measured", so a model
+  doesn't read a missing service as "not post-quantum ready". `probe_limits` and the server
+  instructions now tell the model to call it for any question about ports, hosts or limits.
+- `examples/run_questions.py`: runs a fixed question set through the agent loop and records
+  each trace, answer and timing.
+- `examples/agent_loop.py`: a dependency-free agent loop (Ollama + this server) with a JSONL trace.
+  After a failed tool call, a reply with no tool call gets one nudge to act or answer.
+
 ## [0.2.0] - 2026-11-22
 
 Hardening release: limits that hold under double-clicks, slow DNS and busy shared addresses, a
