@@ -33,3 +33,7 @@ results/*
 !results/*-final.csv
 !results/*-final-charts.png
 pqc-probe-week4-kit/
+
+# Agent experiment output (crates/pqc-probe-mcp/examples)
+/runs/
+/*.jsonl
