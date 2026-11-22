@@ -5,7 +5,10 @@ One version number covers the three crates, the Docker image, the binaries and t
 ## Before the tag
 
 1. Set the version in `Cargo.toml` (`[workspace.package]` and the `pqc-probe-core` entry in
-   `[workspace.dependencies]`), run `cargo check` so `Cargo.lock` follows, and commit.
+   `[workspace.dependencies]`), run `cargo check` so `Cargo.lock` follows, and commit. While the
+   version is 0.x, anything under "Breaking" in the changelog needs the minor number raised
+   (0.1.x to 0.2.0): `cargo publish` builds the CLI and web crates against the core version
+   their dependency names, and a patch release of core cannot change its public types.
 2. In `CHANGELOG.md`, replace `- unreleased` with the date for this version
    (`## [0.1.0] - 2026-11-20`). The release job refuses a version still marked unreleased.
 3. `ci` is green on `main`. Optionally run the `release` workflow by hand: it builds and checks

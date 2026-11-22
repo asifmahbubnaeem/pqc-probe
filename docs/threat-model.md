@@ -44,7 +44,7 @@ how the code is built; "operator" means the deployment has to provide it.
 | Repeated probes against one target. | A repeat of the same request within a minute gets the earlier job back and costs no connection (`PQC_WEB_TARGET_COOLDOWN_SECS`). A repeat that arrives while the first is still being prepared waits for that job (at most 15 s, charged as a poll) instead of resolving and spending budget again. SSH algorithm checks are sequential and paced (one handshake per 1.1 s, at most 8). | Test: `a_repeat_request_returns_the_earlier_job_and_costs_nothing`, `a_triple_click_while_dns_is_slow_makes_one_job_and_costs_one_request`, `a_repeat_of_a_refused_request_gets_its_own_refusal`; pacing tests in core. |
 | OpenSSH 9.8+ servers penalise sources that open many connections (`PerSourcePenalties`). | Pacing keeps one client near one connection per second. Operators should still expect some targets to briefly penalise the service address. | Observed on the test bench; documented in `docs/web.md`. |
 | Scanning many different targets from one client. | Per-client limits: burst 5, 6 per minute, 2 in flight, 60 per day. | Test: `ratelimit::tests::*`, API tests for 429. |
-| Hitting one server through many names or from many clients. | A limit per server address across all clients (burst 6, 12 a minute): `429 target_busy`. One DNS lookup per request, so both protocols hit the same checked address. | Test: `one_server_address_is_not_probed_more_than_its_budget_whatever_the_name`, `both_protocols_cost_one_dns_lookup`. |
+| Hitting one server through many names or from many clients. | A limit per server address across all clients (burst 6, 12 a minute): `429 target_busy`. A refusal probes nothing, so the client's token is given back and the request is charged as a status poll instead. One DNS lookup per request, so both protocols hit the same checked address. | Test: `one_server_address_is_not_probed_more_than_its_budget_whatever_the_name`, `a_busy_target_does_not_spend_the_clients_budget`, `retrying_a_busy_target_is_still_limited`, `both_protocols_cost_one_dns_lookup`. |
 
 ### Denial of service against the service
 
@@ -110,7 +110,9 @@ The service does not sandbox itself. For a public deployment:
   would get each other's reports. Aliases and other spellings of one server are held back by
   the per-server-address limit (burst 6, 12 a minute across all clients), which also applies to
   new probes of shared addresses such as CDNs, so a busy shared address can be refused to
-  everyone for a short time.
+  everyone for a short time. The refusal says the address may be shared and does not use up the
+  visitor's probe budget; operators expecting many CDN-hosted targets can raise
+  `PQC_WEB_TARGET_BURST` and `PQC_WEB_TARGET_PER_MINUTE`.
 - **Different protocol or mode combinations for one host** (`tls` vs `both`) are separate
   cooldown entries; the per-client and per-address limits still bound them.
 - **State is in memory.** A restart forgets jobs, limits and cooldowns, which gives a client a

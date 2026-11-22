@@ -306,12 +306,17 @@ pub(crate) async fn submit(
         .collect();
     addrs.sort();
     addrs.dedup();
+    // A refusal here probes nothing, so the client gets its token back; the DNS work it caused
+    // is charged as a status poll instead, which still bounds a client that keeps trying.
     for addr in addrs {
-        drop(
-            st.target_limiter
-                .try_start(addr, Instant::now())
-                .map_err(|d| ApiError::target_busy(d.retry_after()))?,
-        );
+        match st.target_limiter.try_start(addr, Instant::now()) {
+            Ok(slot) => drop(slot),
+            Err(d) => {
+                guard.refund();
+                check_poll(st, ip)?;
+                return Err(ApiError::target_busy(d.retry_after()));
+            }
+        }
     }
 
     let job = ProbeJob {
@@ -1014,6 +1019,97 @@ mod tests {
         assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
         assert_eq!(v["error"]["code"], "target_busy");
         assert!(h.get("retry-after").is_some());
+    }
+
+    /// Fake DNS where `other.test` and `third.test` are servers of their own; every other name
+    /// shares one address.
+    struct ThreeServers;
+
+    impl Resolver for ThreeServers {
+        fn prepare<'a>(
+            &'a self,
+            host: &'a str,
+            port: u16,
+            policy: &'a Policy,
+        ) -> crate::prober::BoxFuture<'a, Result<pqc_probe_core::Target, pqc_probe_core::PolicyError>>
+        {
+            Box::pin(async move {
+                let last = match host {
+                    "other.test" => 99,
+                    "third.test" => 100,
+                    _ => return FakeResolver.prepare(host, port, policy).await,
+                };
+                let ip = std::net::Ipv4Addr::new(93, 184, 216, last);
+                pqc_probe_core::policy::check_resolved(host, port, &[ip], policy)
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn a_busy_target_does_not_spend_the_clients_budget() {
+        let cfg = Config {
+            limits: crate::ratelimit::RateLimits {
+                burst: 3,
+                per_minute: 6,
+                target_burst: 1,
+                target_per_minute: 1,
+                ..crate::ratelimit::RateLimits::relaxed()
+            },
+            ..small_config()
+        };
+        let app = router(state_with(cfg, FakeProber::ok(), Arc::new(ThreeServers)));
+        let (s, _, _) = send(
+            &app,
+            post_from(r#"{"target":"a.test"}"#, "198.51.100.1", None),
+        )
+        .await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        // Other names for the same, now busy, server: refused, five times over.
+        for name in ["b.test", "c.test", "d.test", "e.test", "f.test"] {
+            let body = format!(r#"{{"target":"{name}"}}"#);
+            let (s, _, v) = send(&app, post_from(&body, "198.51.100.1", None)).await;
+            assert_eq!(s, StatusCode::TOO_MANY_REQUESTS, "{name}");
+            assert_eq!(v["error"]["code"], "target_busy");
+        }
+        // Nothing was probed for those, so two of the three tokens are still there.
+        for t in ["other.test", "third.test"] {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+            let body = format!(r#"{{"target":"{t}"}}"#);
+            let (s, _, v) = send(&app, post_from(&body, "198.51.100.1", None)).await;
+            assert_eq!(s, StatusCode::ACCEPTED, "{t}: {v}");
+        }
+    }
+
+    #[tokio::test]
+    async fn retrying_a_busy_target_is_still_limited() {
+        // Refunded requests are charged as polls, so hammering a busy server still runs out.
+        let cfg = Config {
+            limits: crate::ratelimit::RateLimits {
+                target_burst: 1,
+                target_per_minute: 1,
+                poll_burst: 3,
+                poll_per_minute: 6,
+                ..crate::ratelimit::RateLimits::relaxed()
+            },
+            ..small_config()
+        };
+        let app = router(state(cfg, FakeProber::ok()));
+        let (s, _, _) = send(
+            &app,
+            post_from(r#"{"target":"a.test"}"#, "198.51.100.1", None),
+        )
+        .await;
+        assert_eq!(s, StatusCode::ACCEPTED);
+        let mut codes = Vec::new();
+        for name in ["b.test", "c.test", "d.test", "e.test"] {
+            let body = format!(r#"{{"target":"{name}"}}"#);
+            let (_, _, v) = send(&app, post_from(&body, "198.51.100.1", None)).await;
+            codes.push(v["error"]["code"].as_str().unwrap().to_string());
+        }
+        assert_eq!(
+            codes,
+            ["target_busy", "target_busy", "target_busy", "rate_limited"]
+        );
     }
 
     #[tokio::test]

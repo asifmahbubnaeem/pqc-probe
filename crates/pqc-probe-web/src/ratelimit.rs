@@ -148,6 +148,14 @@ pub struct InflightGuard {
     key: IpAddr,
 }
 
+impl InflightGuard {
+    /// Give back what admitting this request cost (its token and its place in the daily count),
+    /// for a request that was refused before any probe started. The slot is freed on drop.
+    pub fn refund(self) {
+        self.limiter.refund(self.key);
+    }
+}
+
 impl Drop for InflightGuard {
     fn drop(&mut self) {
         self.limiter.release(self.key);
@@ -234,6 +242,13 @@ impl IpLimiter {
             limiter: Arc::clone(self),
             key,
         })
+    }
+
+    fn refund(&self, key: IpAddr) {
+        if let Some(st) = self.lock().get_mut(&key) {
+            st.tokens = (st.tokens + 1.0).min(f64::from(self.limits.burst));
+            st.day_count = st.day_count.saturating_sub(1);
+        }
     }
 
     fn release(&self, key: IpAddr) {

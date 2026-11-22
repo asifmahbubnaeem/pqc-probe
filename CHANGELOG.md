@@ -22,9 +22,10 @@ added, never removed or renamed.
 
 - A full resolver is answered with `503 resolver_busy` and `Retry-After: 5`. The documented list
   of error codes now includes every code the service returns.
-
-### Web service
-
+- A probe refused with `429 target_busy` no longer spends the client's probe budget: its token
+  and daily count are given back, and the request is charged as a status poll instead. Before,
+  two refusals for a busy shared address used up a client's tokens for every other target too.
+  The message now says the address may be shared (as CDN addresses are).
 - An identical request that arrives while the first is still being prepared (a double-click on
   the form, a retried API call) now waits for the first one's job instead of resolving again and
   spending the client's and the target's budget. Before, a triple-click cost two tokens and two

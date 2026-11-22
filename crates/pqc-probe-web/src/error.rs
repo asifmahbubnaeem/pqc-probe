@@ -85,9 +85,14 @@ impl ApiError {
         let mut e = Self::new(
             StatusCode::TOO_MANY_REQUESTS,
             "target_busy",
-            "this server has been probed too often recently; try again later",
+            "the server at this address has been probed often in the last minute, by you or by \
+             others; it may be shared with other sites, as CDN addresses are",
         )
-        .with_hint("Results of recent probes stay available under their probe ids.");
+        .with_hint(
+            "Retry after the number of seconds in the Retry-After header. This refusal did not \
+             use up your probe budget. A repeat of the same request within a minute returns the \
+             earlier result.",
+        );
         e.retry_after = Some(retry_after);
         e
     }
