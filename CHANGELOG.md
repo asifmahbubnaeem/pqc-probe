@@ -6,10 +6,15 @@ added, never removed or renamed.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-22
+
+Hardening release: limits that hold under double-clicks, slow DNS and busy shared addresses, a
+newer OQS-OpenSSH, and ShellCheck in CI.
+
 ### Breaking (`pqc-probe-core`)
 
 - `PolicyError` is now `#[non_exhaustive]` and has a new variant, `ResolverBusy`. Code that
-  matches on it needs a wildcard arm. The next release bumps `pqc-probe-core` to 0.2.0.
+  matches on it needs a wildcard arm.
 
 ### Core
 

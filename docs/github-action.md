@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: pqc
-        uses: asifmahbubnaeem/pqc-probe@v0.1.0
+        uses: asifmahbubnaeem/pqc-probe@v0.2.0
         with:
           targets: |
             example.com
@@ -26,7 +26,7 @@ jobs:
 ## As a gate
 
 ```yaml
-      - uses: asifmahbubnaeem/pqc-probe@v0.1.0
+      - uses: asifmahbubnaeem/pqc-probe@v0.2.0
         with:
           targets: api.example.com, www.example.com
           protocol: tls

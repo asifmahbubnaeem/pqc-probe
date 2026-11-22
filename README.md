@@ -119,7 +119,7 @@ could not tell (timeout, dropped connection), and such rows are left out of the 
   policy:
 
   ```yaml
-  - uses: asifmahbubnaeem/pqc-probe@v0.1.0
+  - uses: asifmahbubnaeem/pqc-probe@v0.2.0
     with:
       targets: api.example.com, git.example.com:2222
       require-pq-ssh: "true"
