@@ -1,0 +1,29 @@
+[package]
+name = "pqc-probe-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+readme = "README.md"
+keywords = ["post-quantum", "pqc", "mcp", "ai-agent", "tls"]
+categories = ["cryptography", "command-line-utilities"]
+description = "MCP server for pqc-probe: lets AI agents check a server's post-quantum TLS and SSH support, behind the hosted-service guardrails"
+
+[[bin]]
+name = "pqc-probe-mcp"
+path = "src/main.rs"
+
+[dependencies]
+pqc-probe-core.workspace = true
+pqc-probe-web.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["io-std"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+rmcp = { version = "3.11", features = ["server", "macros", "transport-io"] }

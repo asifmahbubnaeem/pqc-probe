@@ -112,6 +112,9 @@ could not tell (timeout, dropped connection), and such rows are left out of the 
 
 ## Web service, GitHub Action, JSON
 
+- **MCP server for AI agents** (`pqc-probe-mcp`): lets an agent ask "does this host support
+  post-quantum TLS or SSH?" through the Model Context Protocol, with the web service's target
+  policy on by default. See [crates/pqc-probe-mcp/README.md](crates/pqc-probe-mcp/README.md).
 - **Web service** (`pqc-probe-web`): a JSON API and an HTML page, built for hosting: target
   policy against internal networks, per-client and per-target limits, job queue.
   See [docs/web.md](docs/web.md) and the [threat model](docs/threat-model.md).

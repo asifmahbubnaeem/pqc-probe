@@ -4,6 +4,7 @@ members = [
     "crates/pqc-probe-core",
     "crates/pqc-probe-cli",
     "crates/pqc-probe-web",
+    "crates/pqc-probe-mcp",
 ]
 
 [workspace.package]
@@ -18,6 +19,7 @@ authors = ["Asif Mahbub Naeem <asifnaim0123@gmail.com>"]
 
 [workspace.dependencies]
 pqc-probe-core = { path = "crates/pqc-probe-core", version = "0.2.0" }
+pqc-probe-web = { path = "crates/pqc-probe-web", version = "0.2.0" }
 csv = "1.3"
 anyhow = "1.0"
 thiserror = "1.0"
